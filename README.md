@@ -269,3 +269,41 @@ await VerifyAsync(source, expected);
 
 Now the test fails, because the analyzer is still empty, and does not generate the desired warnings yet, 
 so finally the analyzer can be implemented using TDD.
+
+## Implement the analyzer
+
+Since the use case is not too complex, the analyzer implementation is lightweight, too:
+
+<!-- snippet: EnforceDescriptionAnalyzer_Implementation -->
+<a id='snippet-enforcedescriptionanalyzer_implementation'></a>
+```cs
+public override void Initialize(AnalysisContext context)
+{
+    context.EnableConcurrentExecution();
+    context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.None);
+
+    context.RegisterSymbolAction(AnalyzeSymbol, SymbolKind.Property);
+}
+
+private static void AnalyzeSymbol(SymbolAnalysisContext context)
+{
+    var property = (IPropertySymbol)context.Symbol;
+
+    var attributes = property.GetAttributes();
+
+    if (!attributes.Any(attr => attr.AttributeClass?.Name == "TextAttribute"))
+        return;
+
+    if (attributes.Any(attr => attr.AttributeClass?.Name == "DescriptionAttribute"))
+        return;
+
+    context.ReportDiagnostic(Diagnostic.Create(Diagnostics.TextPropertyHasNoDescription, property.Locations.First(), property.Name));
+}
+```
+<sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer/EnforceDescriptionAnalyzer.cs#L17-L42' title='Snippet source file'>snippet source</a> | <a href='#snippet-enforcedescriptionanalyzer_implementation' title='Start of snippet'>anchor</a></sup>
+<!-- endSnippet -->
+
+It registers a symbol action to analyze all properties, and checks if the attributes are set according to the requirement.
+
+Now the test succeeds, so the analyzer is working correctly.
+

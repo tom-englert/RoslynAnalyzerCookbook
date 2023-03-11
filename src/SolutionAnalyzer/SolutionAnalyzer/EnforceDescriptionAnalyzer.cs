@@ -18,8 +18,26 @@ public class EnforceDescriptionAnalyzer : DiagnosticAnalyzer
 
     public override void Initialize(AnalysisContext context)
     {
+        context.EnableConcurrentExecution();
+        context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.None);
+
+        context.RegisterSymbolAction(AnalyzeSymbol, SymbolKind.Property);
     }
 
+    private static void AnalyzeSymbol(SymbolAnalysisContext context)
+    {
+        var property = (IPropertySymbol)context.Symbol;
+
+        var attributes = property.GetAttributes();
+
+        if (!attributes.Any(attr => attr.AttributeClass?.Name == "TextAttribute"))
+            return;
+
+        if (attributes.Any(attr => attr.AttributeClass?.Name == "DescriptionAttribute"))
+            return;
+
+        context.ReportDiagnostic(Diagnostic.Create(Diagnostics.TextPropertyHasNoDescription, property.Locations.First(), property.Name));
+    }
 
     // end-snippet
 }
