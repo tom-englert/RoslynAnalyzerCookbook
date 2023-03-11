@@ -88,3 +88,72 @@ internal static class CSharpAnalyzerVerifier<TAnalyzer>
 <!-- endSnippet -->
 > see source for the full version including defaults and extension methods
 
+## Add the analyzer and the corresponding unit test
+
+### Define the diagnostic descriptor
+> It's a good practice to keep the definition of all descriptors in one place, so you don't 
+> loose track of the id's when having more than one analyzer in the project.
+> Also it's easier to reference the descriptors in the tests.
+<!-- snippet: Diagnostics -->
+<a id='snippet-diagnostics'></a>
+```cs
+public static class Diagnostics
+{
+    private const string Category = "Custom";
+
+    public static readonly DiagnosticDescriptor TextPropertyHasNoDescription = new("CUS001",
+        "Property with Text attribute has no description",
+        "Property {0} has a Text attribute but no Description attribute",
+        Category,
+        DiagnosticSeverity.Error, isEnabledByDefault: true);
+}
+```
+<sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer/Diagnostics.cs#L5-L16' title='Snippet source file'>snippet source</a> | <a href='#snippet-diagnostics' title='Start of snippet'>anchor</a></sup>
+<!-- endSnippet -->
+
+### Add an empty analyzer class to the analyzer project
+
+<!-- snippet: EnforceDescriptionAnalyzer_Declaration -->
+<a id='snippet-enforcedescriptionanalyzer_declaration'></a>
+```cs
+[DiagnosticAnalyzer(LanguageNames.CSharp)]
+public class EnforceDescriptionAnalyzer : DiagnosticAnalyzer
+{
+    public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } = ImmutableArray.Create(Diagnostics.TextPropertyHasNoDescription);
+```
+<sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer/EnforceDescriptionAnalyzer.cs#L8-L15' title='Snippet source file'>snippet source</a> | <a href='#snippet-enforcedescriptionanalyzer_declaration' title='Start of snippet'>anchor</a></sup>
+<!-- endSnippet -->
+
+### Add a basic test with a minimal class as source code.
+
+<!-- snippet: BasicTestSetup -->
+<a id='snippet-basictestsetup'></a>
+```cs
+using static CSharpAnalyzerVerifier<EnforceDescriptionAnalyzer>;
+
+[TestClass]
+public class BasicTestSetup
+{
+    private static Task VerifyAsync(string source, params DiagnosticResult[] expected)
+    {
+        return new Test(source).AddDiagnostics(expected).RunAsync();
+    }
+
+    [TestMethod]
+    public async Task CompilationDoesNotGenerateErrors()
+    {
+        const string source = """
+            namespace MyApp;
+            
+            class TypeName
+            {   
+                int SomeProperty { get; set; }
+            }
+            """;
+
+        await VerifyAsync(source);
+    }
+}
+```
+<sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer.Test/EnforceDescriptionAnalyzerTest.cs#L7-L35' title='Snippet source file'>snippet source</a> | <a href='#snippet-basictestsetup' title='Start of snippet'>anchor</a></sup>
+<!-- endSnippet -->
