@@ -254,3 +254,18 @@ Now the test succeeds again, so the test framework is set up properly.
 
 Next step is to reflect the requirements of the use case, so the tests fails because the analyzer has no implementation yet.
 
+### Update the test to reflect the use case
+There should be an error reported for the `BadProperty`, since it has a `Text` but no `Description` attribute, 
+so this behavior will be enforced in the test:
+<!-- snippet: EnforceDescriptionAnalyzerTest_Verification -->
+<a id='snippet-enforcedescriptionanalyzertest_verification'></a>
+```cs
+var expected = Diagnostic(Diagnostics.TextPropertyHasNoDescription).WithArguments("BadProperty").WithLocation(0);
+
+await VerifyAsync(source, expected);
+```
+<sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer.Test/EnforceDescriptionAnalyzerTest.cs#L76-L80' title='Snippet source file'>snippet source</a> | <a href='#snippet-enforcedescriptionanalyzertest_verification' title='Start of snippet'>anchor</a></sup>
+<!-- endSnippet -->
+
+Now the test fails, because the analyzer is still empty, and does not generate the desired warnings yet, 
+so finally the analyzer can be implemented using TDD.

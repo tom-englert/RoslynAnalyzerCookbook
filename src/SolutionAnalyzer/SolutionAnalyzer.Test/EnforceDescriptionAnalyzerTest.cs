@@ -73,6 +73,10 @@ public class EnforceDescriptionAnalyzerTest
             """;
         // end-snippet
 
-        await VerifyAsync(source);
+        // begin-snippet:  EnforceDescriptionAnalyzerTest_Verification
+        var expected = Diagnostic(Diagnostics.TextPropertyHasNoDescription).WithArguments("BadProperty").WithLocation(0);
+
+        await VerifyAsync(source, expected);
+        // end-snippet
     }
 }
