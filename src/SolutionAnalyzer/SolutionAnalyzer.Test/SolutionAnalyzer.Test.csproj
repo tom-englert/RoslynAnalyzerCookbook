@@ -16,4 +16,23 @@
     <ProjectReference Include="..\SolutionAnalyzer\SolutionAnalyzer.csproj" />
   </ItemGroup>
 
+  <!-- begin-snippet: GeneratePackageReferences-->
+  <Target Name="_GeneratePackageReferences" BeforeTargets="Build">
+    <ItemGroup>
+      <_GPRLine Include="// ReSharper disable All" />
+      <_GPRLine Include="using Microsoft.CodeAnalysis.Testing%3B%0D%0A" />
+      <_GPRLine Include="[System.CodeDom.Compiler.GeneratedCode(&quot;MSBuild&quot;, null)]" />
+      <_GPRLine Include="internal static class PackageReference" />
+      <_GPRLine Include="{" />
+      <_GPRLine Include="%20%20%20%20public static readonly PackageIdentity $([System.String]::Copy(&quot;%(PackageReference.Identity)&quot;).Replace(&quot;.&quot;, &quot;_&quot;)) = new(&quot;%(PackageReference.Identity)&quot;, &quot;%(PackageReference.Version)&quot;)%3B"
+                Condition="!$([System.String]::Copy(&quot;%(PackageReference.Identity)&quot;).StartsWith(&quot;Microsoft.&quot;)) 
+                       AND !$([System.String]::Copy(&quot;%(PackageReference.Identity)&quot;).StartsWith(&quot;MSTest.Test&quot;))
+                       AND '%(PackageReference.PrivateAssets)'!='All'
+                       "/>
+      <_GPRLine Include="}" />
+    </ItemGroup>
+    <WriteLinesToFile File="PackageReference.cs" Lines="@(_GPRLine)" Overwrite="True" />
+  </Target>
+  <!-- end-snippet -->
+
 </Project>

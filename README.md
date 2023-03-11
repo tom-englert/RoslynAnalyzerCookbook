@@ -157,3 +157,100 @@ public class BasicTestSetup
 ```
 <sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer.Test/EnforceDescriptionAnalyzerTest.cs#L7-L35' title='Snippet source file'>snippet source</a> | <a href='#snippet-basictestsetup' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
+
+## Update the unit test to reflect the use case
+
+Now add the `Text` attribute to the properties of the test source:
+<!-- snippet: EnforceDescriptionAnalyzerTest_Source -->
+<a id='snippet-enforcedescriptionanalyzertest_source'></a>
+```cs
+const string source = """
+    using System.ComponentModel;
+    using TomsToolbox.Essentials;
+    
+    namespace MyApp;
+    
+    class TypeName
+    {   
+        [Text("Key", "Value")]
+        int {|#0:BadProperty|} { get; set; }
+
+        [Description("Some description")]
+        [Text("Key", "Value")]
+        int {|#1:GoodProperty|} { get; set; }
+
+        int AnotherProperty { get; set; }
+    }
+    """;
+```
+<sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer.Test/EnforceDescriptionAnalyzerTest.cs#L55-L74' title='Snippet source file'>snippet source</a> | <a href='#snippet-enforcedescriptionanalyzertest_source' title='Start of snippet'>anchor</a></sup>
+<!-- endSnippet -->
+
+The problem here is that the `Text` property is defined in a NuGet package, and the test now fails, reporting compiler errors for the test source.
+
+To fix this a reference to this missing package must be added in the test compilation. 
+Of course the reference should point to the same package with the same version as referenced by the project; 
+now the `PackageIdentity ` type needed to specify a package only accepts a string for package name and version, 
+and specifying these hard coded in the source code is duplication and not a good practice.
+
+A solution is to auto-generate a code snippet with all referenced package of the project, so it will be synchronized with the project automatically. 
+
+It will be done by adding this build target to the test project:
+<!-- snippet: GeneratePackageReferences -->
+<a id='snippet-generatepackagereferences'></a>
+```csproj
+<Target Name="_GeneratePackageReferences" BeforeTargets="Build">
+  <ItemGroup>
+    <_GPRLine Include="// ReSharper disable All" />
+    <_GPRLine Include="using Microsoft.CodeAnalysis.Testing%3B%0D%0A" />
+    <_GPRLine Include="[System.CodeDom.Compiler.GeneratedCode(&quot;MSBuild&quot;, null)]" />
+    <_GPRLine Include="internal static class PackageReference" />
+    <_GPRLine Include="{" />
+    <_GPRLine Include="%20%20%20%20public static readonly PackageIdentity $([System.String]::Copy(&quot;%(PackageReference.Identity)&quot;).Replace(&quot;.&quot;, &quot;_&quot;)) = new(&quot;%(PackageReference.Identity)&quot;, &quot;%(PackageReference.Version)&quot;)%3B"
+              Condition="!$([System.String]::Copy(&quot;%(PackageReference.Identity)&quot;).StartsWith(&quot;Microsoft.&quot;)) 
+                     AND !$([System.String]::Copy(&quot;%(PackageReference.Identity)&quot;).StartsWith(&quot;MSTest.Test&quot;))
+                     AND '%(PackageReference.PrivateAssets)'!='All'
+                     "/>
+    <_GPRLine Include="}" />
+  </ItemGroup>
+  <WriteLinesToFile File="PackageReference.cs" Lines="@(_GPRLine)" Overwrite="True" />
+</Target>
+```
+<sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer.Test/SolutionAnalyzer.Test.csproj#L19-L36' title='Snippet source file'>snippet source</a> | <a href='#snippet-generatepackagereferences' title='Start of snippet'>anchor</a></sup>
+<!-- endSnippet -->
+
+This will translate all `PackageReference` items in the project to a corresponding entry in the `PackageRefrence` class, so after the next build the file `PackageRefrence.cs` will look like this:
+<!-- snippet: PackageReference.cs -->
+<a id='snippet-PackageReference.cs'></a>
+```cs
+// ReSharper disable All
+using Microsoft.CodeAnalysis.Testing;
+
+[System.CodeDom.Compiler.GeneratedCode("MSBuild", null)]
+internal static class PackageReference
+{
+    public static readonly PackageIdentity TomsToolbox_Essentials = new("TomsToolbox.Essentials", "2.8.5");
+}
+```
+<sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer.Test/PackageReference.cs#L1-L8' title='Snippet source file'>snippet source</a> | <a href='#snippet-PackageReference.cs' title='Start of snippet'>anchor</a></sup>
+<!-- endSnippet -->
+So now the package reference can be added to the test compilation:
+<!-- snippet: EnforceDescriptionAnalyzerTest_VerifyDeclaration -->
+<a id='snippet-enforcedescriptionanalyzertest_verifydeclaration'></a>
+```cs
+private static Task VerifyAsync(string source, params DiagnosticResult[] expected)
+{
+    return new Test(source).AddDiagnostics(expected)
+        .AddPackages(PackageReference.TomsToolbox_Essentials)
+        .RunAsync();
+}
+
+private static DiagnosticResult Diagnostic(DiagnosticDescriptor descriptor) => new(descriptor);
+```
+<sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer.Test/EnforceDescriptionAnalyzerTest.cs#L40-L50' title='Snippet source file'>snippet source</a> | <a href='#snippet-enforcedescriptionanalyzertest_verifydeclaration' title='Start of snippet'>anchor</a></sup>
+<!-- endSnippet -->
+
+Now the test succeeds again, so the test framework is set up properly.
+
+Next step is to reflect the requirements of the use case, so the tests fails because the analyzer has no implementation yet.
+

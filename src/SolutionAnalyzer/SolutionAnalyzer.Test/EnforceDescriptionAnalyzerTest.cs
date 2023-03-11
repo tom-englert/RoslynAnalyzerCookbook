@@ -40,7 +40,9 @@ public class EnforceDescriptionAnalyzerTest
     // begin-snippet:  EnforceDescriptionAnalyzerTest_VerifyDeclaration
     private static Task VerifyAsync(string source, params DiagnosticResult[] expected)
     {
-        return new Test(source).AddDiagnostics(expected).RunAsync();
+        return new Test(source).AddDiagnostics(expected)
+            .AddPackages(PackageReference.TomsToolbox_Essentials)
+            .RunAsync();
     }
 
     private static DiagnosticResult Diagnostic(DiagnosticDescriptor descriptor) => new(descriptor);
@@ -50,17 +52,26 @@ public class EnforceDescriptionAnalyzerTest
     [TestMethod]
     public async Task ErrorWhenTextPropertyHasNoDescription()
     {
+        // begin-snippet:  EnforceDescriptionAnalyzerTest_Source
         const string source = """
-            namespace MyApp
-            {
-                class TypeName
-                {   
-                    int {|#0:BadProperty|} { get; set; }
+            using System.ComponentModel;
+            using TomsToolbox.Essentials;
+            
+            namespace MyApp;
+            
+            class TypeName
+            {   
+                [Text("Key", "Value")]
+                int {|#0:BadProperty|} { get; set; }
 
-                    int {|#1:GoodProperty|} { get; set; }
-                }
+                [Description("Some description")]
+                [Text("Key", "Value")]
+                int {|#1:GoodProperty|} { get; set; }
+
+                int AnotherProperty { get; set; }
             }
             """;
+        // end-snippet
 
         await VerifyAsync(source);
     }
