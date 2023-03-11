@@ -307,3 +307,19 @@ It registers a symbol action to analyze all properties, and checks if the attrib
 
 Now the test succeeds, so the analyzer is working correctly.
 
+Last step is to integrate the analyzer in the solution, so it is active in every project.
+
+## Integrate the analyzer in the solution
+
+To use the analyzer in any project, a reference to the analyzer project needs to be added, and the project output needs to be declared as `Analyzer`.
+Since the analyzer should be referenced by any project of the solution, it's a good idea to add the reference in the `Directory.Build.Props` file, and exclude the analyzer project by a condition to avoid circular references.
+
+<!-- snippet: AnalyzerIntegration -->
+<a id='snippet-analyzerintegration'></a>
+```props
+<ItemGroup Condition='!$(MSBuildProjectName.ToUpperInvariant().EndsWith("ANALYZER")) AND !$(MSBuildProjectName.ToUpperInvariant().EndsWith(".TEST"))'>
+  <ProjectReference Include="$(MSBuildThisFileDirectory)SolutionAnalyzer\SolutionAnalyzer\SolutionAnalyzer.csproj" ReferenceOutputAssembly="false" OutputItemType="Analyzer" />
+</ItemGroup>
+```
+<sup><a href='/src/Directory.Build.props#L9-L13' title='Snippet source file'>snippet source</a> | <a href='#snippet-analyzerintegration' title='Start of snippet'>anchor</a></sup>
+<!-- endSnippet -->
