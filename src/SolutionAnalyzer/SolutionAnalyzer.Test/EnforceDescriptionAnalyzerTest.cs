@@ -5,7 +5,6 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace SolutionAnalyzer.Test;
 
 // begin-snippet:  BasicTestSetup
-
 using static CSharpAnalyzerVerifier<EnforceDescriptionAnalyzer>;
 
 [TestClass]
@@ -31,7 +30,6 @@ public class BasicTestSetup
         await VerifyAsync(source);
     }
 }
-
 // end-snippet
 
 [TestClass]

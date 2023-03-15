@@ -14,6 +14,11 @@ However most of the topics also apply when generating an analyzer package or ext
 - Shows how to reference NuGet packages in the test code, automated by MSBuild.
 - Integration of the analyzers into the solution without the need to create a package or install a Visual Studio extension.
 
+## Use cases
+- [Diagnostic analyzer to conditionally enforce coding rules](#use-case-1)
+- [Supression analyzers to suppress warnings depending on the context](#use-case-2)
+
+
 ## Use case #1
 
 Enforce that every property that has a `[Text]` attribute also has a `[Description]` attribute, by showing a warning,
@@ -21,13 +26,13 @@ so e.g. a basic user documentation can be generated automatically for dedicated 
 
 > In real life the will be probably a more specific attribute than a simple `[Text]`, this is just used to make this sample more universal.
 
-## Add the scaffold for the analyzer to the solution
+### Add the scaffold for the analyzer to the solution
 
 In the first step the scaffold for the analyzers and the corresponding tests will be added to the solution.
 
 > Using the "Analyzer with Code Fix" template adds too much unused stuff, with problematic defaults, so it's better to start from scratch with sanitized test verifiers.
 
-### Add an empty project "SolutionAnalyzer":
+#### Add an empty project "SolutionAnalyzer":
 ```xml
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
@@ -42,7 +47,7 @@ In the first step the scaffold for the analyzers and the corresponding tests wil
 ```
 <sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer/SolutionAnalyzer.csproj' title='Snippet source file'>snippet source</a></sup>
 
-### Add an empty project "SolutionAnalyzer.Test"
+#### Add an empty project "SolutionAnalyzer.Test"
 ```xml
 <Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
@@ -61,7 +66,7 @@ In the first step the scaffold for the analyzers and the corresponding tests wil
 ```
 <sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer.Test/SolutionAnalyzer.Test.csproj' title='Snippet source file'>snippet source</a></sup>
 
-### Add the sanitized test verifiers to the test project
+#### Add the sanitized test verifiers to the test project
 
 <!-- snippet: CSharpAnalyzerVerifier -->
 <a id='snippet-csharpanalyzerverifier'></a>
@@ -81,16 +86,14 @@ internal static class CSharpAnalyzerVerifier<TAnalyzer>
         protected override CompilationOptions CreateCompilationOptions() => Default.CompilationOptions;
 
         protected override ParseOptions CreateParseOptions() => Default.ParseOptions;
-    }
-}
 ```
-<sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer.Test/Verifiers.cs#L18-L38' title='Snippet source file'>snippet source</a> | <a href='#snippet-csharpanalyzerverifier' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer.Test/Verifiers.cs#L18-L34' title='Snippet source file'>snippet source</a> | <a href='#snippet-csharpanalyzerverifier' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 > see source for the full version including defaults and extension methods
 
-## Add the analyzer and the corresponding unit test
+### Add the analyzer and the corresponding unit test
 
-### Define the diagnostic descriptor
+#### Define the diagnostic descriptor
 > It's a good practice to keep the definition of all descriptors in one place, so you don't 
 > loose track of the id's when having more than one analyzer in the project.
 > Also it's easier to reference the descriptors in the tests.
@@ -106,12 +109,11 @@ public static class Diagnostics
         "Property {0} has a Text attribute but no Description attribute",
         Category,
         DiagnosticSeverity.Error, isEnabledByDefault: true);
-}
 ```
-<sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer/Diagnostics.cs#L5-L16' title='Snippet source file'>snippet source</a> | <a href='#snippet-diagnostics' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer/Diagnostics.cs#L5-L15' title='Snippet source file'>snippet source</a> | <a href='#snippet-diagnostics' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
-### Add an empty analyzer class to the analyzer project
+#### Add an empty analyzer class to the analyzer project
 
 <!-- snippet: EnforceDescriptionAnalyzer_Declaration -->
 <a id='snippet-enforcedescriptionanalyzer_declaration'></a>
@@ -121,10 +123,10 @@ public class EnforceDescriptionAnalyzer : DiagnosticAnalyzer
 {
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } = ImmutableArray.Create(Diagnostics.TextPropertyHasNoDescription);
 ```
-<sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer/EnforceDescriptionAnalyzer.cs#L8-L15' title='Snippet source file'>snippet source</a> | <a href='#snippet-enforcedescriptionanalyzer_declaration' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer/EnforceDescriptionAnalyzer.cs#L8-L13' title='Snippet source file'>snippet source</a> | <a href='#snippet-enforcedescriptionanalyzer_declaration' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
-### Add a basic test with a minimal class as source code.
+#### Add a basic test with a minimal class as source code.
 
 <!-- snippet: BasicTestSetup -->
 <a id='snippet-basictestsetup'></a>
@@ -155,10 +157,10 @@ public class BasicTestSetup
     }
 }
 ```
-<sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer.Test/EnforceDescriptionAnalyzerTest.cs#L7-L35' title='Snippet source file'>snippet source</a> | <a href='#snippet-basictestsetup' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer.Test/EnforceDescriptionAnalyzerTest.cs#L7-L33' title='Snippet source file'>snippet source</a> | <a href='#snippet-basictestsetup' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
-## Update the unit test to reflect the use case
+### Update the unit test to reflect the use case
 
 Now add the `Text` attribute to the properties of the test source:
 <!-- snippet: EnforceDescriptionAnalyzerTest_Source -->
@@ -183,7 +185,7 @@ const string source = """
     }
     """;
 ```
-<sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer.Test/EnforceDescriptionAnalyzerTest.cs#L55-L74' title='Snippet source file'>snippet source</a> | <a href='#snippet-enforcedescriptionanalyzertest_source' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer.Test/EnforceDescriptionAnalyzerTest.cs#L53-L72' title='Snippet source file'>snippet source</a> | <a href='#snippet-enforcedescriptionanalyzertest_source' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 The problem here is that the `Text` property is defined in a NuGet package, and the test now fails, reporting compiler errors for the test source.
@@ -247,7 +249,7 @@ private static Task VerifyAsync(string source, params DiagnosticResult[] expecte
 
 private static DiagnosticResult Diagnostic(DiagnosticDescriptor descriptor) => new(descriptor);
 ```
-<sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer.Test/EnforceDescriptionAnalyzerTest.cs#L40-L50' title='Snippet source file'>snippet source</a> | <a href='#snippet-enforcedescriptionanalyzertest_verifydeclaration' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer.Test/EnforceDescriptionAnalyzerTest.cs#L38-L48' title='Snippet source file'>snippet source</a> | <a href='#snippet-enforcedescriptionanalyzertest_verifydeclaration' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 Now the test succeeds again, so the test framework is set up properly.
@@ -264,13 +266,13 @@ var expected = Diagnostic(Diagnostics.TextPropertyHasNoDescription).WithArgument
 
 await VerifyAsync(source, expected);
 ```
-<sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer.Test/EnforceDescriptionAnalyzerTest.cs#L76-L80' title='Snippet source file'>snippet source</a> | <a href='#snippet-enforcedescriptionanalyzertest_verification' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer.Test/EnforceDescriptionAnalyzerTest.cs#L74-L78' title='Snippet source file'>snippet source</a> | <a href='#snippet-enforcedescriptionanalyzertest_verification' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 Now the test fails, because the analyzer is still empty, and does not generate the desired warnings yet, 
 so finally the analyzer can be implemented using TDD.
 
-## Implement the analyzer
+### Implement the analyzer
 
 Since the use case is not too complex, the analyzer implementation is lightweight, too:
 
@@ -300,7 +302,7 @@ private static void AnalyzeSymbol(SymbolAnalysisContext context)
     context.ReportDiagnostic(Diagnostic.Create(Diagnostics.TextPropertyHasNoDescription, property.Locations.First(), property.Name));
 }
 ```
-<sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer/EnforceDescriptionAnalyzer.cs#L17-L42' title='Snippet source file'>snippet source</a> | <a href='#snippet-enforcedescriptionanalyzer_implementation' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer/EnforceDescriptionAnalyzer.cs#L15-L38' title='Snippet source file'>snippet source</a> | <a href='#snippet-enforcedescriptionanalyzer_implementation' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 It registers a symbol action to analyze all properties, and checks if the attributes are set according to the requirement.
@@ -309,7 +311,7 @@ Now the test succeeds, so the analyzer is working correctly.
 
 Last step is to integrate the analyzer in the solution, so it is active in every project.
 
-## Integrate the analyzer in the solution
+### Integrate the analyzer in the solution
 
 To use the analyzer in any project, a reference to the analyzer project needs to be added, and the project output needs to be declared as `Analyzer`.
 Since the analyzer should be referenced by any project of the solution, it's a good idea to add the reference in the `Directory.Build.Props` file, and exclude the analyzer project by a condition to avoid circular references.
@@ -322,4 +324,81 @@ Since the analyzer should be referenced by any project of the solution, it's a g
 </ItemGroup>
 ```
 <sup><a href='/src/Directory.Build.props#L9-L13' title='Snippet source file'>snippet source</a> | <a href='#snippet-analyzerintegration' title='Start of snippet'>anchor</a></sup>
+<!-- endSnippet -->
+
+## Use case #2
+
+This use case is to suppress warnings from the nullable extended analyzer to document the usage of the null forgiving symbol 
+when used in a proertiy with the `init` keyword.
+
+### Add the scaffold for the suppression analyzer
+
+As a first step the scaffold is added to the solution:
+
+#### Define the diagnostic descriptor
+<!-- snippet: Diagnostics_Suppressor -->
+<a id='snippet-diagnostics_suppressor'></a>
+```cs
+public static readonly SuppressionDescriptor SuppressNullForgivingWarning = new("CUS002",
+    "NX0002",
+    "Null forgiving is a standard pattern for init only properties");
+```
+<sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer/Diagnostics.cs#L17-L21' title='Snippet source file'>snippet source</a> | <a href='#snippet-diagnostics_suppressor' title='Start of snippet'>anchor</a></sup>
+<!-- endSnippet -->
+
+#### Add an empty analyzer
+<!-- snippet: SuppressNullForgivingAnalyzer_Declaration -->
+<a id='snippet-suppressnullforgivinganalyzer_declaration'></a>
+```cs
+[DiagnosticAnalyzer(LanguageNames.CSharp)]
+public class SuppressNullForgivingWarningAnalyzer : DiagnosticSuppressor
+{
+    public override ImmutableArray<SuppressionDescriptor> SupportedSuppressions { get; } =
+        ImmutableArray.Create(Diagnostics.SuppressNullForgivingWarning);
+```
+<sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer/SuppressNullForgivingWarningAnalyzer.cs#L8-L14' title='Snippet source file'>snippet source</a> | <a href='#snippet-suppressnullforgivinganalyzer_declaration' title='Start of snippet'>anchor</a></sup>
+<!-- endSnippet -->
+
+#### Add the test scaffold
+<!-- snippet: BasicSuppressionTestSetup -->
+<a id='snippet-basicsuppressiontestsetup'></a>
+```cs
+[TestClass]
+public class BasicSuppressionTestSetup
+{
+    // Required for init-only support.
+    private const string IsExternalInit = """
+        namespace System.Runtime.CompilerServices 
+        {
+            internal abstract class IsExternalInit 
+            {
+            }
+        }
+        """;
+
+    private static Task VerifyAsync(string source, params DiagnosticResult[] expected)
+    {
+        return new Test(source)
+            .AddSources(IsExternalInit)
+            .AddDiagnostics(expected)
+            .RunAsync();
+    }
+
+    [TestMethod]
+    public async Task NullForgivingWarningIsSuppressedForInitOnlyProperties()
+    {
+        const string source = """
+            #nullable enable
+
+            class Test 
+            {
+                string InitOnly { get; init; } = default!;
+            }
+            """;
+
+        await VerifyAsync(source);
+    }
+}
+```
+<sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer.Test/SuppressNullForgivingWarningTest.cs#L8-L45' title='Snippet source file'>snippet source</a> | <a href='#snippet-basicsuppressiontestsetup' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->

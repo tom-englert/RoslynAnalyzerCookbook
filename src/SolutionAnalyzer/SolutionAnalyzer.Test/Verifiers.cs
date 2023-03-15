@@ -16,7 +16,6 @@ using Verifier = Microsoft.CodeAnalysis.Testing.Verifiers.MSTestVerifier;
 namespace SolutionAnalyzer.Test;
 
 // begin-snippet:  CSharpAnalyzerVerifier
-
 internal static class CSharpAnalyzerVerifier<TAnalyzer>
     where TAnalyzer : DiagnosticAnalyzer, new()
 {
@@ -32,10 +31,9 @@ internal static class CSharpAnalyzerVerifier<TAnalyzer>
         protected override CompilationOptions CreateCompilationOptions() => Default.CompilationOptions;
 
         protected override ParseOptions CreateParseOptions() => Default.ParseOptions;
+// end-snippet
     }
 }
-
-// end-snippet
 
 internal static class CSharpCodeFixVerifier<TAnalyzer, TCodeFix>
     where TAnalyzer : DiagnosticAnalyzer, new()
