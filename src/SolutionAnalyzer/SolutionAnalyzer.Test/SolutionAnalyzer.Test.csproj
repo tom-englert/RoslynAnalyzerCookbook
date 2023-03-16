@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
     <PackageReference Include="JetBrains.Annotations" Version="2022.3.1" PrivateAssets="All" />
@@ -15,6 +15,13 @@
   <ItemGroup>
     <ProjectReference Include="..\SolutionAnalyzer\SolutionAnalyzer.csproj" />
   </ItemGroup>
+
+  <!-- begin-snippet: ReferenceNullableExtendedAnalyzer  -->
+  <ItemGroup>
+    <PackageReference Include="Nullable.Extended.Analyzer" Version="1.10.4539" PrivateAssets="all" GeneratePathProperty="true"/>
+    <Reference Include="$(PkgNullable_Extended_Analyzer)\analyzers\dotnet\cs\Nullable.Extended.Analyzer.dll" />
+  </ItemGroup>
+  <!-- end-snippet -->
 
   <!-- begin-snippet: GeneratePackageReferences-->
   <Target Name="_GeneratePackageReferences" BeforeTargets="Build">

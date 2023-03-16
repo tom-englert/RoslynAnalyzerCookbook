@@ -32,6 +32,36 @@ internal static class CSharpAnalyzerVerifier<TAnalyzer>
 
         protected override ParseOptions CreateParseOptions() => Default.ParseOptions;
 // end-snippet
+
+// begin-snippet:  CSharpAnalyzerVerifier_Suppressor
+        private readonly IList<DiagnosticAnalyzer> _additionalAnalyzers = new List<DiagnosticAnalyzer>();
+        private bool? _reportSuppressedDiagnostics;
+
+        public Test AddAnalyzer(DiagnosticAnalyzer analyzer)
+        {
+            // assume we are testing an suppression analyzer:
+            _reportSuppressedDiagnostics ??= true;
+
+            _additionalAnalyzers.Add(analyzer);
+            return this;
+        }
+
+        public Test WithReportSuppressedDiagnostics(bool value)
+        {
+            _reportSuppressedDiagnostics = value;
+            return this;
+        }
+
+        protected override IEnumerable<DiagnosticAnalyzer> GetDiagnosticAnalyzers()
+        {
+            return base.GetDiagnosticAnalyzers().Concat(_additionalAnalyzers);
+        }
+
+        protected override CompilationWithAnalyzers CreateCompilationWithAnalyzers(Compilation compilation, ImmutableArray<DiagnosticAnalyzer> analyzers, AnalyzerOptions options, CancellationToken cancellationToken)
+        {
+            return compilation.WithAnalyzers(analyzers, new CompilationWithAnalyzersOptions(options, null, true, false, _reportSuppressedDiagnostics.GetValueOrDefault()));
+        }
+// end-snippet
     }
 }
 
@@ -44,6 +74,7 @@ internal static class CSharpCodeFixVerifier<TAnalyzer, TCodeFix>
         public Test(string source, string? fixedSource = null)
         {
             TestCode = source;
+            // ! FixedCode just ignores null values
             FixedCode = fixedSource!;
             ReferenceAssemblies = Default.ReferenceAssemblies;
             TestBehaviors = Default.TestBehaviors;
@@ -63,6 +94,7 @@ internal static class CSharpCodeRefactoringVerifier<TCodeRefactoring>
         public Test(string source, string? fixedSource = null)
         {
             TestCode = source;
+            // ! FixedCode just ignores null values
             FixedCode = fixedSource!;
             ReferenceAssemblies = Default.ReferenceAssemblies;
             TestBehaviors = Default.TestBehaviors;

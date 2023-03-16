@@ -218,7 +218,7 @@ It will be done by adding this build target to the test project:
   <WriteLinesToFile File="PackageReference.cs" Lines="@(_GPRLine)" Overwrite="True" />
 </Target>
 ```
-<sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer.Test/SolutionAnalyzer.Test.csproj#L19-L36' title='Snippet source file'>snippet source</a> | <a href='#snippet-generatepackagereferences' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer.Test/SolutionAnalyzer.Test.csproj#L26-L43' title='Snippet source file'>snippet source</a> | <a href='#snippet-generatepackagereferences' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 This will translate all `PackageReference` items in the project to a corresponding entry in the `PackageRefrence` class, so after the next build the file `PackageRefrence.cs` will look like this:
@@ -328,8 +328,10 @@ Since the analyzer should be referenced by any project of the solution, it's a g
 
 ## Use case #2
 
-This use case is to suppress warnings from the nullable extended analyzer to document the usage of the null forgiving symbol 
-when used in a proertiy with the `init` keyword.
+In the project the [Nullable.Extended.Analyzer](https://github.com/tom-englert/Nullable.Extended) is used to force documentation of the 
+usage of the null forgiving symbol. 
+
+Since it's a standard pattern to initialize an init-only property with `default!`, no extra documentation is needed and the warning should be suppressed.
 
 ### Add the scaffold for the suppression analyzer
 
@@ -356,7 +358,7 @@ public class SuppressNullForgivingWarningAnalyzer : DiagnosticSuppressor
     public override ImmutableArray<SuppressionDescriptor> SupportedSuppressions { get; } =
         ImmutableArray.Create(Diagnostics.SuppressNullForgivingWarning);
 ```
-<sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer/SuppressNullForgivingWarningAnalyzer.cs#L8-L14' title='Snippet source file'>snippet source</a> | <a href='#snippet-suppressnullforgivinganalyzer_declaration' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer/SuppressNullForgivingWarningAnalyzer.cs#L10-L16' title='Snippet source file'>snippet source</a> | <a href='#snippet-suppressnullforgivinganalyzer_declaration' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 #### Add the test scaffold
@@ -364,7 +366,7 @@ public class SuppressNullForgivingWarningAnalyzer : DiagnosticSuppressor
 <a id='snippet-basicsuppressiontestsetup'></a>
 ```cs
 [TestClass]
-public class BasicSuppressionTestSetup
+public class SuppressNullForgivingWarningTest
 {
     // Required for init-only support.
     private const string IsExternalInit = """
@@ -376,16 +378,8 @@ public class BasicSuppressionTestSetup
         }
         """;
 
-    private static Task VerifyAsync(string source, params DiagnosticResult[] expected)
-    {
-        return new Test(source)
-            .AddSources(IsExternalInit)
-            .AddDiagnostics(expected)
-            .RunAsync();
-    }
-
     [TestMethod]
-    public async Task NullForgivingWarningIsSuppressedForInitOnlyProperties()
+    public async Task BasicTestSetup()
     {
         const string source = """
             #nullable enable
@@ -396,9 +390,136 @@ public class BasicSuppressionTestSetup
             }
             """;
 
-        await VerifyAsync(source);
+        await new Test(source)
+            .AddSources(IsExternalInit)
+            .RunAsync();
+    }
+```
+<sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer.Test/SuppressNullForgivingWarningTest.cs#L13-L43' title='Snippet source file'>snippet source</a> | <a href='#snippet-basicsuppressiontestsetup' title='Start of snippet'>anchor</a></sup>
+<!-- endSnippet -->
+
+### Prepare the test to include the analyzer with the diagnostic to suppress
+
+At next the test needs to know about the diagnostic that should be suppressed. 
+Additionally to the package reference the assembly of the analyzer needs to be referenced, too, so the analyzer is available at the test's runtime:
+
+<!-- snippet: ReferenceNullableExtendedAnalyzer -->
+<a id='snippet-referencenullableextendedanalyzer'></a>
+```csproj
+<ItemGroup>
+  <PackageReference Include="Nullable.Extended.Analyzer" Version="1.10.4539" PrivateAssets="all" GeneratePathProperty="true"/>
+  <Reference Include="$(PkgNullable_Extended_Analyzer)\analyzers\dotnet\cs\Nullable.Extended.Analyzer.dll" />
+</ItemGroup>
+```
+<sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer.Test/SolutionAnalyzer.Test.csproj#L19-L24' title='Snippet source file'>snippet source</a> | <a href='#snippet-referencenullableextendedanalyzer' title='Start of snippet'>anchor</a></sup>
+<!-- endSnippet -->
+
+Since there is now more than one analyzer involved, the test framework needs to be extended to allow for adding the additional analyzer that the tests should run against.
+
+Also reporting suppressed diagnostics needs to be enabled, so the suppressed diagnostic is not missing, but explicitly reported as suppressed, so the test can verify this correctly.
+<!-- snippet: CSharpAnalyzerVerifier_Suppressor -->
+<a id='snippet-csharpanalyzerverifier_suppressor'></a>
+```cs
+private readonly IList<DiagnosticAnalyzer> _additionalAnalyzers = new List<DiagnosticAnalyzer>();
+private bool? _reportSuppressedDiagnostics;
+
+public Test AddAnalyzer(DiagnosticAnalyzer analyzer)
+{
+    // assume we are testing an suppression analyzer:
+    _reportSuppressedDiagnostics ??= true;
+
+    _additionalAnalyzers.Add(analyzer);
+    return this;
+}
+
+public Test WithReportSuppressedDiagnostics(bool value)
+{
+    _reportSuppressedDiagnostics = value;
+    return this;
+}
+
+protected override IEnumerable<DiagnosticAnalyzer> GetDiagnosticAnalyzers()
+{
+    return base.GetDiagnosticAnalyzers().Concat(_additionalAnalyzers);
+}
+
+protected override CompilationWithAnalyzers CreateCompilationWithAnalyzers(Compilation compilation, ImmutableArray<DiagnosticAnalyzer> analyzers, AnalyzerOptions options, CancellationToken cancellationToken)
+{
+    return compilation.WithAnalyzers(analyzers, new CompilationWithAnalyzersOptions(options, null, true, false, _reportSuppressedDiagnostics.GetValueOrDefault()));
+}
+```
+<sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer.Test/Verifiers.cs#L36-L64' title='Snippet source file'>snippet source</a> | <a href='#snippet-csharpanalyzerverifier_suppressor' title='Start of snippet'>anchor</a></sup>
+<!-- endSnippet -->
+
+With this preconditions the suppressor test can be implemented:
+
+<!-- snippet: SuppressNullForgivingWarningTest -->
+<a id='snippet-suppressnullforgivingwarningtest'></a>
+```cs
+private static readonly NullForgivingDetectionAnalyzer NullForgivingDetectionAnalyzer = new();
+private static readonly DiagnosticDescriptor Nx0002 = NullForgivingDetectionAnalyzer.SupportedDiagnostics.Single(item => item.Id == "NX0002");
+
+private static DiagnosticResult Diagnostic(DiagnosticDescriptor descriptor) => new(descriptor);
+
+[TestMethod]
+public async Task NullForgivingWarningIsSuppressedForInitOnlyProperties()
+{
+    const string source = """
+        #nullable enable
+
+        class Test
+        {
+            string InitOnly { get; init; } = default{|#0:!|};
+            string Normal { get; set; } = default{|#1:!|};
+        }
+        """;
+
+    var expected = new[]
+    {
+        Diagnostic(Nx0002).WithLocation(0).WithArguments("InitOnly").WithIsSuppressed(true),
+        Diagnostic(Nx0002).WithLocation(1).WithArguments("Normal").WithIsSuppressed(false)
+    };
+
+    await new Test(source)
+        .AddSources(IsExternalInit)
+        .AddDiagnostics(expected)
+        .AddAnalyzer(NullForgivingDetectionAnalyzer)
+        .RunAsync();
+}
+```
+<sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer.Test/SuppressNullForgivingWarningTest.cs#L45-L76' title='Snippet source file'>snippet source</a> | <a href='#snippet-suppressnullforgivingwarningtest' title='Start of snippet'>anchor</a></sup>
+<!-- endSnippet -->
+
+And based on the test the suppression analyzer can be implemented:
+
+<!-- snippet: SuppressNullForgivingAnalyzer_Implementation -->
+<a id='snippet-suppressnullforgivinganalyzer_implementation'></a>
+```cs
+public override void ReportSuppressions(SuppressionAnalysisContext context)
+{
+    var cancellationToken = context.CancellationToken;
+
+    foreach (var diagnostic in context.ReportedDiagnostics)
+    {
+        var location = diagnostic.Location;
+        var sourceTree = location.SourceTree;
+        if (sourceTree == null)
+            continue;
+
+        var root = sourceTree.GetRoot(cancellationToken);
+
+        var sourceSpan = location.SourceSpan;
+        var elementNode = root.FindNode(sourceSpan);
+
+        if (elementNode.Parent is not EqualsValueClauseSyntax { Parent: PropertyDeclarationSyntax propertyDeclaration })
+            continue;
+
+        if (propertyDeclaration.AccessorList?.Accessors.Any(item => item.IsKind(SyntaxKind.InitAccessorDeclaration)) == true)
+        {
+            context.ReportSuppression(Suppression.Create(Diagnostics.SuppressNullForgivingWarning, diagnostic));
+        }
     }
 }
 ```
-<sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer.Test/SuppressNullForgivingWarningTest.cs#L8-L45' title='Snippet source file'>snippet source</a> | <a href='#snippet-basicsuppressiontestsetup' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer/SuppressNullForgivingWarningAnalyzer.cs#L18-L44' title='Snippet source file'>snippet source</a> | <a href='#snippet-suppressnullforgivinganalyzer_implementation' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
