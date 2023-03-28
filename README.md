@@ -76,18 +76,22 @@ internal static class CSharpAnalyzerVerifier<TAnalyzer>
 {
     public class Test : CSharpAnalyzerTest<TAnalyzer, Verifier>
     {
-        public Test(string source)
+        public Test(string? source = null)
         {
-            TestCode = source;
+            // ! TestCode nullability annotation is wrong
+            TestCode = source!;
             ReferenceAssemblies = Default.ReferenceAssemblies;
-            TestBehaviors = Default.TestBehaviors;
         }
+
+        public List<PackageIdentity> AdditionalPackages { get; } = new();
+
+        public List<DiagnosticAnalyzer> AdditionalAnalyzers { get; } = new();
 
         protected override CompilationOptions CreateCompilationOptions() => Default.CompilationOptions;
 
         protected override ParseOptions CreateParseOptions() => Default.ParseOptions;
 ```
-<sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer.Test/Verifiers.cs#L18-L34' title='Snippet source file'>snippet source</a> | <a href='#snippet-csharpanalyzerverifier' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer.Test/Verifiers.cs#L18-L39' title='Snippet source file'>snippet source</a> | <a href='#snippet-csharpanalyzerverifier' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 > see source for the full version including defaults and extension methods
 
@@ -136,11 +140,6 @@ using static CSharpAnalyzerVerifier<EnforceDescriptionAnalyzer>;
 [TestClass]
 public class BasicTestSetup
 {
-    private static Task VerifyAsync(string source, params DiagnosticResult[] expected)
-    {
-        return new Test(source).AddDiagnostics(expected).RunAsync();
-    }
-
     [TestMethod]
     public async Task CompilationDoesNotGenerateErrors()
     {
@@ -153,11 +152,11 @@ public class BasicTestSetup
             }
             """;
 
-        await VerifyAsync(source);
+        await new Test(source).RunAsync();
     }
 }
 ```
-<sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer.Test/EnforceDescriptionAnalyzerTest.cs#L7-L33' title='Snippet source file'>snippet source</a> | <a href='#snippet-basictestsetup' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer.Test/EnforceDescriptionAnalyzerTest.cs#L5-L26' title='Snippet source file'>snippet source</a> | <a href='#snippet-basictestsetup' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 ### Update the unit test to reflect the use case
@@ -185,7 +184,7 @@ const string source = """
     }
     """;
 ```
-<sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer.Test/EnforceDescriptionAnalyzerTest.cs#L53-L72' title='Snippet source file'>snippet source</a> | <a href='#snippet-enforcedescriptionanalyzertest_source' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer.Test/EnforceDescriptionAnalyzerTest.cs#L34-L53' title='Snippet source file'>snippet source</a> | <a href='#snippet-enforcedescriptionanalyzertest_source' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 The problem here is that the `Text` property is defined in a NuGet package, and the test now fails, reporting compiler errors for the test source.
@@ -237,20 +236,9 @@ internal static class PackageReference
 <sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer.Test/PackageReference.cs#L1-L8' title='Snippet source file'>snippet source</a> | <a href='#snippet-PackageReference.cs' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 So now the package reference can be added to the test compilation:
-<!-- snippet: EnforceDescriptionAnalyzerTest_VerifyDeclaration -->
-<a id='snippet-enforcedescriptionanalyzertest_verifydeclaration'></a>
 ```cs
-private static Task VerifyAsync(string source, params DiagnosticResult[] expected)
-{
-    return new Test(source).AddDiagnostics(expected)
-        .AddPackages(PackageReference.TomsToolbox_Essentials)
-        .RunAsync();
-}
-
-private static DiagnosticResult Diagnostic(DiagnosticDescriptor descriptor) => new(descriptor);
+ReferenceAssemblies = Default.ReferenceAssemblies.AddPackages(PackageReference.TomsToolbox_Essentials);
 ```
-<sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer.Test/EnforceDescriptionAnalyzerTest.cs#L38-L48' title='Snippet source file'>snippet source</a> | <a href='#snippet-enforcedescriptionanalyzertest_verifydeclaration' title='Start of snippet'>anchor</a></sup>
-<!-- endSnippet -->
 
 Now the test succeeds again, so the test framework is set up properly.
 
@@ -262,11 +250,13 @@ so this behavior will be enforced in the test:
 <!-- snippet: EnforceDescriptionAnalyzerTest_Verification -->
 <a id='snippet-enforcedescriptionanalyzertest_verification'></a>
 ```cs
-var expected = Diagnostic(Diagnostics.TextPropertyHasNoDescription).WithArguments("BadProperty").WithLocation(0);
-
-await VerifyAsync(source, expected);
+await new Test(source)
+{
+    AdditionalPackages = { PackageReference.TomsToolbox_Essentials },
+    ExpectedDiagnostics = { Diagnostics.TextPropertyHasNoDescription.AsResult().WithArguments("BadProperty").WithLocation(0) },
+}.RunAsync();
 ```
-<sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer.Test/EnforceDescriptionAnalyzerTest.cs#L74-L78' title='Snippet source file'>snippet source</a> | <a href='#snippet-enforcedescriptionanalyzertest_verification' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer.Test/EnforceDescriptionAnalyzerTest.cs#L55-L61' title='Snippet source file'>snippet source</a> | <a href='#snippet-enforcedescriptionanalyzertest_verification' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 Now the test fails, because the analyzer is still empty, and does not generate the desired warnings yet, 
@@ -390,12 +380,14 @@ public class SuppressNullForgivingWarningTest
             }
             """;
 
-        await new Test(source)
-            .AddSources(IsExternalInit)
-            .RunAsync();
+        await new Test
+        {
+            TestState = { Sources = { source, IsExternalInit } }
+        }
+        .RunAsync();
     }
 ```
-<sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer.Test/SuppressNullForgivingWarningTest.cs#L13-L43' title='Snippet source file'>snippet source</a> | <a href='#snippet-basicsuppressiontestsetup' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer.Test/SuppressNullForgivingWarningTest.cs#L10-L42' title='Snippet source file'>snippet source</a> | <a href='#snippet-basicsuppressiontestsetup' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 ### Prepare the test to include the analyzer with the diagnostic to suppress
@@ -420,35 +412,33 @@ Also reporting suppressed diagnostics needs to be enabled, so the suppressed dia
 <!-- snippet: CSharpAnalyzerVerifier_Suppressor -->
 <a id='snippet-csharpanalyzerverifier_suppressor'></a>
 ```cs
-private readonly IList<DiagnosticAnalyzer> _additionalAnalyzers = new List<DiagnosticAnalyzer>();
-private bool? _reportSuppressedDiagnostics;
+private bool _reportSuppressedDiagnostics;
 
-public Test AddAnalyzer(DiagnosticAnalyzer analyzer)
+protected override Task RunImplAsync(CancellationToken cancellationToken)
 {
-    // assume we are testing an suppression analyzer:
-    _reportSuppressedDiagnostics ??= true;
+    // Workaround https://github.com/dotnet/roslyn-sdk/issues/1078
+    _reportSuppressedDiagnostics = GetDiagnosticAnalyzers().Any(analyzer => analyzer is DiagnosticSuppressor);
+    if (_reportSuppressedDiagnostics)
+    {
+        TestBehaviors |= TestBehaviors.SkipSuppressionCheck;
+    }
 
-    _additionalAnalyzers.Add(analyzer);
-    return this;
-}
+    ReferenceAssemblies = ReferenceAssemblies.AddPackages(AdditionalPackages.ToImmutableArray());
 
-public Test WithReportSuppressedDiagnostics(bool value)
-{
-    _reportSuppressedDiagnostics = value;
-    return this;
+    return base.RunImplAsync(cancellationToken);
 }
 
 protected override IEnumerable<DiagnosticAnalyzer> GetDiagnosticAnalyzers()
 {
-    return base.GetDiagnosticAnalyzers().Concat(_additionalAnalyzers);
+    return base.GetDiagnosticAnalyzers().Concat(AdditionalAnalyzers);
 }
 
 protected override CompilationWithAnalyzers CreateCompilationWithAnalyzers(Compilation compilation, ImmutableArray<DiagnosticAnalyzer> analyzers, AnalyzerOptions options, CancellationToken cancellationToken)
 {
-    return compilation.WithAnalyzers(analyzers, new CompilationWithAnalyzersOptions(options, null, true, false, _reportSuppressedDiagnostics.GetValueOrDefault()));
+    return compilation.WithAnalyzers(analyzers, new CompilationWithAnalyzersOptions(options, null, true, false, _reportSuppressedDiagnostics));
 }
 ```
-<sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer.Test/Verifiers.cs#L36-L64' title='Snippet source file'>snippet source</a> | <a href='#snippet-csharpanalyzerverifier_suppressor' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer.Test/Verifiers.cs#L41-L68' title='Snippet source file'>snippet source</a> | <a href='#snippet-csharpanalyzerverifier_suppressor' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 With this preconditions the suppressor test can be implemented:
@@ -458,8 +448,6 @@ With this preconditions the suppressor test can be implemented:
 ```cs
 private static readonly NullForgivingDetectionAnalyzer NullForgivingDetectionAnalyzer = new();
 private static readonly DiagnosticDescriptor Nx0002 = NullForgivingDetectionAnalyzer.SupportedDiagnostics.Single(item => item.Id == "NX0002");
-
-private static DiagnosticResult Diagnostic(DiagnosticDescriptor descriptor) => new(descriptor);
 
 [TestMethod]
 public async Task NullForgivingWarningIsSuppressedForInitOnlyProperties()
@@ -474,20 +462,20 @@ public async Task NullForgivingWarningIsSuppressedForInitOnlyProperties()
         }
         """;
 
-    var expected = new[]
+    await new Test
     {
-        Diagnostic(Nx0002).WithLocation(0).WithArguments("InitOnly").WithIsSuppressed(true),
-        Diagnostic(Nx0002).WithLocation(1).WithArguments("Normal").WithIsSuppressed(false)
-    };
-
-    await new Test(source)
-        .AddSources(IsExternalInit)
-        .AddDiagnostics(expected)
-        .AddAnalyzer(NullForgivingDetectionAnalyzer)
-        .RunAsync();
+        TestState = { Sources = { source, IsExternalInit } },
+        AdditionalAnalyzers = { NullForgivingDetectionAnalyzer },
+        ExpectedDiagnostics =
+        {
+            Nx0002.AsResult().WithLocation(0).WithArguments("InitOnly").WithIsSuppressed(true),
+            Nx0002.AsResult().WithLocation(1).WithArguments("Normal").WithIsSuppressed(false)
+        }
+    }
+    .RunAsync();
 }
 ```
-<sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer.Test/SuppressNullForgivingWarningTest.cs#L45-L76' title='Snippet source file'>snippet source</a> | <a href='#snippet-suppressnullforgivingwarningtest' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer.Test/SuppressNullForgivingWarningTest.cs#L44-L73' title='Snippet source file'>snippet source</a> | <a href='#snippet-suppressnullforgivingwarningtest' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 And based on the test the suppression analyzer can be implemented:

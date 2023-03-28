@@ -1,7 +1,4 @@
-﻿using System.Runtime.CompilerServices;
-
-using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.Testing;
+﻿using Microsoft.CodeAnalysis;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 using Nullable.Extended.Analyzer;
@@ -36,17 +33,17 @@ namespace SolutionAnalyzer.Test
                 }
                 """;
 
-            await new Test(source)
-                .AddSources(IsExternalInit)
-                .RunAsync();
+            await new Test
+            {
+                TestState = { Sources = { source, IsExternalInit } }
+            }
+            .RunAsync();
         }
         // end-snippet
 
         // begin-snippet:  SuppressNullForgivingWarningTest
         private static readonly NullForgivingDetectionAnalyzer NullForgivingDetectionAnalyzer = new();
         private static readonly DiagnosticDescriptor Nx0002 = NullForgivingDetectionAnalyzer.SupportedDiagnostics.Single(item => item.Id == "NX0002");
-
-        private static DiagnosticResult Diagnostic(DiagnosticDescriptor descriptor) => new(descriptor);
 
         [TestMethod]
         public async Task NullForgivingWarningIsSuppressedForInitOnlyProperties()
@@ -61,17 +58,17 @@ namespace SolutionAnalyzer.Test
                 }
                 """;
 
-            var expected = new[]
+            await new Test
             {
-                Diagnostic(Nx0002).WithLocation(0).WithArguments("InitOnly").WithIsSuppressed(true),
-                Diagnostic(Nx0002).WithLocation(1).WithArguments("Normal").WithIsSuppressed(false)
-            };
-
-            await new Test(source)
-                .AddSources(IsExternalInit)
-                .AddDiagnostics(expected)
-                .AddAnalyzer(NullForgivingDetectionAnalyzer)
-                .RunAsync();
+                TestState = { Sources = { source, IsExternalInit } },
+                AdditionalAnalyzers = { NullForgivingDetectionAnalyzer },
+                ExpectedDiagnostics =
+                {
+                    Nx0002.AsResult().WithLocation(0).WithArguments("InitOnly").WithIsSuppressed(true),
+                    Nx0002.AsResult().WithLocation(1).WithArguments("Normal").WithIsSuppressed(false)
+                }
+            }
+            .RunAsync();
         }
         // end-snippet
     }

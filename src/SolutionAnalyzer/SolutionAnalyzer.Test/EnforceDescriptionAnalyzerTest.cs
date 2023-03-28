@@ -1,6 +1,4 @@
-﻿using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.Testing;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace SolutionAnalyzer.Test;
 
@@ -10,11 +8,6 @@ using static CSharpAnalyzerVerifier<EnforceDescriptionAnalyzer>;
 [TestClass]
 public class BasicTestSetup
 {
-    private static Task VerifyAsync(string source, params DiagnosticResult[] expected)
-    {
-        return new Test(source).AddDiagnostics(expected).RunAsync();
-    }
-
     [TestMethod]
     public async Task CompilationDoesNotGenerateErrors()
     {
@@ -27,7 +20,7 @@ public class BasicTestSetup
             }
             """;
 
-        await VerifyAsync(source);
+        await new Test(source).RunAsync();
     }
 }
 // end-snippet
@@ -35,18 +28,6 @@ public class BasicTestSetup
 [TestClass]
 public class EnforceDescriptionAnalyzerTest
 {
-    // begin-snippet:  EnforceDescriptionAnalyzerTest_VerifyDeclaration
-    private static Task VerifyAsync(string source, params DiagnosticResult[] expected)
-    {
-        return new Test(source).AddDiagnostics(expected)
-            .AddPackages(PackageReference.TomsToolbox_Essentials)
-            .RunAsync();
-    }
-
-    private static DiagnosticResult Diagnostic(DiagnosticDescriptor descriptor) => new(descriptor);
-
-    // end-snippet
-
     [TestMethod]
     public async Task ErrorWhenTextPropertyHasNoDescription()
     {
@@ -72,9 +53,11 @@ public class EnforceDescriptionAnalyzerTest
         // end-snippet
 
         // begin-snippet:  EnforceDescriptionAnalyzerTest_Verification
-        var expected = Diagnostic(Diagnostics.TextPropertyHasNoDescription).WithArguments("BadProperty").WithLocation(0);
-
-        await VerifyAsync(source, expected);
+        await new Test(source)
+        {
+            AdditionalPackages = { PackageReference.TomsToolbox_Essentials },
+            ExpectedDiagnostics = { Diagnostics.TextPropertyHasNoDescription.AsResult().WithArguments("BadProperty").WithLocation(0) },
+        }.RunAsync();
         // end-snippet
     }
 }

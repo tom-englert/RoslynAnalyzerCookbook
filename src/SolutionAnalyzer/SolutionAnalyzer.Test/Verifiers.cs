@@ -21,47 +21,51 @@ internal static class CSharpAnalyzerVerifier<TAnalyzer>
 {
     public class Test : CSharpAnalyzerTest<TAnalyzer, Verifier>
     {
-        public Test(string source)
+        public Test(string? source = null)
         {
-            TestCode = source;
+            // ! TestCode nullability annotation is wrong
+            TestCode = source!;
             ReferenceAssemblies = Default.ReferenceAssemblies;
-            TestBehaviors = Default.TestBehaviors;
         }
+
+        public List<PackageIdentity> AdditionalPackages { get; } = new();
+
+        public List<DiagnosticAnalyzer> AdditionalAnalyzers { get; } = new();
 
         protected override CompilationOptions CreateCompilationOptions() => Default.CompilationOptions;
 
         protected override ParseOptions CreateParseOptions() => Default.ParseOptions;
-// end-snippet
 
-// begin-snippet:  CSharpAnalyzerVerifier_Suppressor
-        private readonly IList<DiagnosticAnalyzer> _additionalAnalyzers = new List<DiagnosticAnalyzer>();
-        private bool? _reportSuppressedDiagnostics;
+        // end-snippet
 
-        public Test AddAnalyzer(DiagnosticAnalyzer analyzer)
+        // begin-snippet:  CSharpAnalyzerVerifier_Suppressor
+
+        private bool _reportSuppressedDiagnostics;
+
+        protected override Task RunImplAsync(CancellationToken cancellationToken)
         {
-            // assume we are testing an suppression analyzer:
-            _reportSuppressedDiagnostics ??= true;
+            // Workaround https://github.com/dotnet/roslyn-sdk/issues/1078
+            _reportSuppressedDiagnostics = GetDiagnosticAnalyzers().Any(analyzer => analyzer is DiagnosticSuppressor);
+            if (_reportSuppressedDiagnostics)
+            {
+                TestBehaviors |= TestBehaviors.SkipSuppressionCheck;
+            }
 
-            _additionalAnalyzers.Add(analyzer);
-            return this;
-        }
+            ReferenceAssemblies = ReferenceAssemblies.AddPackages(AdditionalPackages.ToImmutableArray());
 
-        public Test WithReportSuppressedDiagnostics(bool value)
-        {
-            _reportSuppressedDiagnostics = value;
-            return this;
+            return base.RunImplAsync(cancellationToken);
         }
 
         protected override IEnumerable<DiagnosticAnalyzer> GetDiagnosticAnalyzers()
         {
-            return base.GetDiagnosticAnalyzers().Concat(_additionalAnalyzers);
+            return base.GetDiagnosticAnalyzers().Concat(AdditionalAnalyzers);
         }
 
         protected override CompilationWithAnalyzers CreateCompilationWithAnalyzers(Compilation compilation, ImmutableArray<DiagnosticAnalyzer> analyzers, AnalyzerOptions options, CancellationToken cancellationToken)
         {
-            return compilation.WithAnalyzers(analyzers, new CompilationWithAnalyzersOptions(options, null, true, false, _reportSuppressedDiagnostics.GetValueOrDefault()));
+            return compilation.WithAnalyzers(analyzers, new CompilationWithAnalyzersOptions(options, null, true, false, _reportSuppressedDiagnostics));
         }
-// end-snippet
+        // end-snippet
     }
 }
 
@@ -77,7 +81,6 @@ internal static class CSharpCodeFixVerifier<TAnalyzer, TCodeFix>
             // ! FixedCode just ignores null values
             FixedCode = fixedSource!;
             ReferenceAssemblies = Default.ReferenceAssemblies;
-            TestBehaviors = Default.TestBehaviors;
         }
 
         protected override CompilationOptions CreateCompilationOptions() => Default.CompilationOptions;
@@ -97,7 +100,6 @@ internal static class CSharpCodeRefactoringVerifier<TCodeRefactoring>
             // ! FixedCode just ignores null values
             FixedCode = fixedSource!;
             ReferenceAssemblies = Default.ReferenceAssemblies;
-            TestBehaviors = Default.TestBehaviors;
         }
 
         protected override CompilationOptions CreateCompilationOptions() => Default.CompilationOptions;
@@ -145,47 +147,11 @@ internal static class Default
 [PublicAPI]
 internal static class CSharpVerifierExtensionMethods
 {
-    public static TTest AddPackages<TTest>(this TTest test, params PackageIdentity[] packages)
-        where TTest : AnalyzerTest<Verifier>
+    public static DiagnosticResult AsResult(this DiagnosticDescriptor descriptor) => new(descriptor);
+
+    public static Func<Solution, ProjectId, Solution> AddReferences(params Assembly[] localReferences)
     {
-        test.ReferenceAssemblies = test.ReferenceAssemblies.WithPackages(packages.ToImmutableArray());
-        return test;
-    }
-
-    public static TTest AddDiagnostics<TTest>(this TTest test, params DiagnosticResult[] expected)
-        where TTest : AnalyzerTest<Verifier>
-    {
-        test.ExpectedDiagnostics.AddRange(expected);
-        return test;
-    }
-
-    public static TTest AddSolutionTransform<TTest>(this TTest test, Func<Solution, Project, Solution> transform)
-        where TTest : AnalyzerTest<Verifier>
-    {
-        test.SolutionTransforms.Add((solution, projectId) =>
-        {
-            var project = solution.GetProject(projectId);
-            return project == null ? solution : transform(solution, project);
-        });
-
-        return test;
-    }
-
-    public static TTest AddSources<TTest>(this TTest test, params string[] sources)
-        where TTest : AnalyzerTest<Verifier>
-    {
-        foreach (var source in sources)
-        {
-            test.TestState.Sources.Add(source);
-        }
-
-        return test;
-    }
-
-    public static TTest AddReferences<TTest>(this TTest test, params Assembly[] localReferences)
-        where TTest : AnalyzerTest<Verifier>
-    {
-        test.SolutionTransforms.Add((solution, projectId) =>
+        return (solution, projectId) =>
         {
             var localMetadataReferences = localReferences
                 .Distinct()
@@ -194,33 +160,16 @@ internal static class CSharpVerifierExtensionMethods
             solution = solution.AddMetadataReferences(projectId, localMetadataReferences);
 
             return solution;
-        });
-
-        return test;
+        };
     }
 
-    public static TTest WithReferenceAssemblies<TTest>(this TTest test, ReferenceAssemblies referenceAssemblies)
-        where TTest : AnalyzerTest<Verifier>
+    public static Func<Solution, ProjectId, Solution> UseLanguageVersion(LanguageVersion languageVersion)
     {
-        if (test.ReferenceAssemblies.Packages.Any())
-            throw new InvalidOperationException("You must call add packages after specifying reference assemblies");
-
-        test.ReferenceAssemblies = referenceAssemblies;
-        return test;
+        return (solution, projectId) => solution.WithProjectParseOptions(projectId, new CSharpParseOptions(languageVersion, DocumentationMode.Diagnose));
     }
 
-    public static TTest WithLangVersion<TTest>(this TTest test, LanguageVersion languageVersion)
-        where TTest : AnalyzerTest<Verifier>
+    public static ReferenceAssemblies AddPackages(this ReferenceAssemblies? referenceAssemblies, params PackageIdentity[] packages)
     {
-        test.SolutionTransforms.Add((solution, projectId) => solution.WithProjectParseOptions(projectId, new CSharpParseOptions(languageVersion, DocumentationMode.Diagnose)));
-        return test;
-    }
-
-    public static TTest WithProjectCompilationOptions<TTest>(this TTest test, Func<CompilationOptions, CompilationOptions> callback)
-        where TTest : AnalyzerTest<Verifier>
-    {
-        test.AddSolutionTransform((solution, project) => solution.WithProjectCompilationOptions(project.Id, callback(project.CompilationOptions ?? Default.CompilationOptions)));
-
-        return test;
+        return (referenceAssemblies ?? Default.ReferenceAssemblies).AddPackages(packages.ToImmutableArray());
     }
 }
