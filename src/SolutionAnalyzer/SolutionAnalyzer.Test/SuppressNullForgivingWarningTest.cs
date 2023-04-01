@@ -1,41 +1,32 @@
 ﻿using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.Testing;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 using Nullable.Extended.Analyzer;
 
 namespace SolutionAnalyzer.Test
 {
-    using static CSharpAnalyzerVerifier<SuppressNullForgivingWarningAnalyzer>;
+    using Test = SuppressorTest<NullForgivingDetectionAnalyzer, SuppressNullForgivingWarningAnalyzer>;
+    using static CSharpAnalyzerTestExtensions;
+    using static ReferenceAssemblies.Net;
 
     // begin-snippet:  BasicSuppressionTestSetup
     [TestClass]
     public class SuppressNullForgivingWarningTest
     {
-        // Required for init-only support.
-        private const string IsExternalInit = """
-            namespace System.Runtime.CompilerServices 
-            {
-                internal abstract class IsExternalInit 
-                {
-                }
-            }
-            """;
-
         [TestMethod]
-        public async Task BasicTestSetup()
+        public async Task CompilationDoesNotGenerateErrors()
         {
             const string source = """
-                #nullable enable
-
                 class Test 
                 {
-                    string InitOnly { get; init; } = default!;
+                    string InitOnly { get; init; } = default;
                 }
                 """;
 
-            await new Test
+            await new Test(source)
             {
-                TestState = { Sources = { source, IsExternalInit } }
+                SolutionTransforms = { WithProjectCompilationOptions(o => o.WithNullableContextOptions(NullableContextOptions.Disable)) }
             }
             .RunAsync();
         }
@@ -49,19 +40,16 @@ namespace SolutionAnalyzer.Test
         public async Task NullForgivingWarningIsSuppressedForInitOnlyProperties()
         {
             const string source = """
-                #nullable enable
-
                 class Test
                 {
-                    string InitOnly { get; init; } = default{|#0:!|};
+                    string? InitOnly { get; init; } = default{|#0:!|};
                     string Normal { get; set; } = default{|#1:!|};
                 }
                 """;
 
-            await new Test
+            await new Test(source)
             {
-                TestState = { Sources = { source, IsExternalInit } },
-                AdditionalAnalyzers = { NullForgivingDetectionAnalyzer },
+                ReferenceAssemblies = Net60.AddPackages(PackageReference.TomsToolbox_Essentials),
                 ExpectedDiagnostics =
                 {
                     Nx0002.AsResult().WithLocation(0).WithArguments("InitOnly").WithIsSuppressed(true),

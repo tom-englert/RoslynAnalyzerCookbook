@@ -1,12 +1,14 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using Microsoft.CodeAnalysis.Testing;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace SolutionAnalyzer.Test;
 
 // begin-snippet:  BasicTestSetup
-using static CSharpAnalyzerVerifier<EnforceDescriptionAnalyzer>;
+using Test = AnalyzerTest<EnforceDescriptionAnalyzer>;
+using static ReferenceAssemblies.Net;
 
 [TestClass]
-public class BasicTestSetup
+public class EnforceDescriptionAnalyzerTest
 {
     [TestMethod]
     public async Task CompilationDoesNotGenerateErrors()
@@ -22,12 +24,8 @@ public class BasicTestSetup
 
         await new Test(source).RunAsync();
     }
-}
 // end-snippet
 
-[TestClass]
-public class EnforceDescriptionAnalyzerTest
-{
     [TestMethod]
     public async Task ErrorWhenTextPropertyHasNoDescription()
     {
@@ -55,8 +53,11 @@ public class EnforceDescriptionAnalyzerTest
         // begin-snippet:  EnforceDescriptionAnalyzerTest_Verification
         await new Test(source)
         {
-            AdditionalPackages = { PackageReference.TomsToolbox_Essentials },
-            ExpectedDiagnostics = { Diagnostics.TextPropertyHasNoDescription.AsResult().WithArguments("BadProperty").WithLocation(0) },
+            ReferenceAssemblies = Net60.AddPackages(PackageReference.TomsToolbox_Essentials),
+            ExpectedDiagnostics =
+            {
+                Diagnostics.TextPropertyHasNoDescription.AsResult().WithArguments("BadProperty").WithLocation(0)
+            },
         }.RunAsync();
         // end-snippet
     }
