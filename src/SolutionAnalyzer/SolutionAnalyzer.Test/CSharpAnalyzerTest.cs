@@ -1,8 +1,6 @@
 ﻿using System.Collections.Immutable;
 
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CodeFixes;
-using Microsoft.CodeAnalysis.CodeRefactorings;
 using Microsoft.CodeAnalysis.CSharp.Testing;
 using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.Testing;
@@ -11,15 +9,12 @@ using Verifier = Microsoft.CodeAnalysis.Testing.Verifiers.MSTestVerifier;
 
 namespace SolutionAnalyzer.Test;
 
-#pragma warning disable NX0001 // Find general usages of the NullForgiving operator
-
 // begin-snippet: CSharpAnalyzerTest
 public class AnalyzerTest<TAnalyzer> : CSharpAnalyzerTest<TAnalyzer, Verifier>
     where TAnalyzer : DiagnosticAnalyzer, new()
 {
-    public AnalyzerTest(string? source = null)
+    public AnalyzerTest()
     {
-        TestCode = source!;
         ReferenceAssemblies = ReferenceAssemblies.Net.Net60;
     }
 
@@ -32,11 +27,6 @@ public class SuppressorTest<TAnalyzer, TSuppressor> : AnalyzerTest<TAnalyzer>
     where TAnalyzer : DiagnosticAnalyzer, new()
     where TSuppressor : DiagnosticAnalyzer, new()
 {
-    public SuppressorTest(string? source = null)
-        : base(source)
-    {
-    }
-
     protected override IEnumerable<DiagnosticAnalyzer> GetDiagnosticAnalyzers()
     {
         return base.GetDiagnosticAnalyzers().Append(new TSuppressor());
@@ -50,28 +40,3 @@ public class SuppressorTest<TAnalyzer, TSuppressor> : AnalyzerTest<TAnalyzer>
     }
 }
 // end-snippet
-
-public class CodeFixTest<TAnalyzer, TCodeFix> : CSharpCodeFixTest<TAnalyzer, TCodeFix, Verifier>
-    where TAnalyzer : DiagnosticAnalyzer, new()
-    where TCodeFix : CodeFixProvider, new()
-{
-    public CodeFixTest(string source, string? fixedSource = null)
-    {
-        TestCode = source;
-        FixedCode = fixedSource!;
-    }
-
-    protected override CompilationOptions CreateCompilationOptions() => base.CreateCompilationOptions().WithCSharpDefaults();
-}
-
-public class RefactoringTest<TCodeRefactoring> : CSharpCodeRefactoringTest<TCodeRefactoring, Verifier>
-    where TCodeRefactoring : CodeRefactoringProvider, new()
-{
-    public RefactoringTest(string source, string? fixedSource = null)
-    {
-        TestCode = source;
-        FixedCode = fixedSource!;
-    }
-
-    protected override CompilationOptions CreateCompilationOptions() => base.CreateCompilationOptions().WithCSharpDefaults();
-}

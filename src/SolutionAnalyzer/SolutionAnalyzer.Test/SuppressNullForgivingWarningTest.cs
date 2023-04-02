@@ -24,8 +24,9 @@ namespace SolutionAnalyzer.Test
                 }
                 """;
 
-            await new Test(source)
+            await new Test
             {
+                TestCode = source,
                 SolutionTransforms = { WithProjectCompilationOptions(o => o.WithNullableContextOptions(NullableContextOptions.Disable)) }
             }
             .RunAsync();
@@ -47,8 +48,9 @@ namespace SolutionAnalyzer.Test
                 }
                 """;
 
-            await new Test(source)
+            await new Test
             {
+                TestCode = source,
                 ReferenceAssemblies = Net60.AddPackages(PackageReference.TomsToolbox_Essentials),
                 ExpectedDiagnostics =
                 {

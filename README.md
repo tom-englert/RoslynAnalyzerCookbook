@@ -55,8 +55,6 @@ In the first step the scaffold for the analyzers and the corresponding tests wil
     <PackageReference Include="MSTest.TestAdapter" Version="3.0.2" />
     <PackageReference Include="MSTest.TestFramework" Version="3.0.2" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Analyzer.Testing.MSTest" Version="1.1.1" />
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.CodeFix.Testing.MSTest" Version="1.1.1" />
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.CodeRefactoring.Testing.MSTest" Version="1.1.1" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="4.5.0" />
   </ItemGroup>
   <ItemGroup>
@@ -74,16 +72,15 @@ In the first step the scaffold for the analyzers and the corresponding tests wil
 public class AnalyzerTest<TAnalyzer> : CSharpAnalyzerTest<TAnalyzer, Verifier>
     where TAnalyzer : DiagnosticAnalyzer, new()
 {
-    public AnalyzerTest(string? source = null)
+    public AnalyzerTest()
     {
-        TestCode = source!;
         ReferenceAssemblies = ReferenceAssemblies.Net.Net60;
     }
 
     protected override CompilationOptions CreateCompilationOptions() => base.CreateCompilationOptions().WithCSharpDefaults();
 }
 ```
-<sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer.Test/CSharpAnalyzerTest.cs#L16-L28' title='Snippet source file'>snippet source</a> | <a href='#snippet-csharpanalyzertest' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer.Test/CSharpAnalyzerTest.cs#L12-L23' title='Snippet source file'>snippet source</a> | <a href='#snippet-csharpanalyzertest' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 > see source for the full version including defaults and extension methods
 
@@ -128,6 +125,7 @@ public class EnforceDescriptionAnalyzer : DiagnosticAnalyzer
 <a id='snippet-basictestsetup'></a>
 ```cs
 using Test = AnalyzerTest<EnforceDescriptionAnalyzer>;
+using static CSharpAnalyzerTestExtensions;
 using static ReferenceAssemblies.Net;
 
 [TestClass]
@@ -145,10 +143,10 @@ public class EnforceDescriptionAnalyzerTest
             }
             """;
 
-        await new Test(source).RunAsync();
+        await new Test { TestCode = source }.RunAsync();
     }
 ```
-<sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer.Test/EnforceDescriptionAnalyzerTest.cs#L6-L27' title='Snippet source file'>snippet source</a> | <a href='#snippet-basictestsetup' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer.Test/EnforceDescriptionAnalyzerTest.cs#L8-L30' title='Snippet source file'>snippet source</a> | <a href='#snippet-basictestsetup' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 ### Update the unit test to reflect the use case
@@ -170,13 +168,13 @@ const string source = """
 
         [Description("Some description")]
         [Text("Key", "Value")]
-        int {|#1:GoodProperty|} { get; set; }
+        string? {|#1:GoodProperty|} { get; set; }
 
         int AnotherProperty { get; set; }
     }
     """;
 ```
-<sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer.Test/EnforceDescriptionAnalyzerTest.cs#L32-L51' title='Snippet source file'>snippet source</a> | <a href='#snippet-enforcedescriptionanalyzertest_source' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer.Test/EnforceDescriptionAnalyzerTest.cs#L35-L54' title='Snippet source file'>snippet source</a> | <a href='#snippet-enforcedescriptionanalyzertest_source' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 #### Referencing a NuGet package
@@ -194,6 +192,9 @@ It will be done by adding this build target to the test project:
 <a id='snippet-generatepackagereferences'></a>
 ```csproj
 <Target Name="_GeneratePackageReferences" BeforeTargets="Build">
+  <PropertyGroup>
+    <ExcludeFromPackageReferenceSource>Microsoft|MSTest</ExcludeFromPackageReferenceSource>
+  </PropertyGroup>
   <ItemGroup>
     <_GPRLine Include="// ReSharper disable All" />
     <_GPRLine Include="using Microsoft.CodeAnalysis.Testing%3B%0D%0A" />
@@ -201,16 +202,13 @@ It will be done by adding this build target to the test project:
     <_GPRLine Include="internal static class PackageReference" />
     <_GPRLine Include="{" />
     <_GPRLine Include="%20%20%20%20public static readonly PackageIdentity $([System.String]::Copy(&quot;%(PackageReference.Identity)&quot;).Replace(&quot;.&quot;, &quot;_&quot;)) = new(&quot;%(PackageReference.Identity)&quot;, &quot;%(PackageReference.Version)&quot;)%3B"
-              Condition="!$([System.String]::Copy(&quot;%(PackageReference.Identity)&quot;).StartsWith(&quot;Microsoft.&quot;)) 
-                     AND !$([System.String]::Copy(&quot;%(PackageReference.Identity)&quot;).StartsWith(&quot;MSTest.Test&quot;))
-                     AND '%(PackageReference.PrivateAssets)'!='All'
-                     "/>
+              Condition="('$(ExcludeFromPackageReferenceSource)'=='' OR !$([System.Text.RegularExpressions.Regex]::IsMatch(%(PackageReference.Identity), $(ExcludeFromPackageReferenceSource), RegexOptions.IgnoreCase))) AND '%(PackageReference.PrivateAssets)'!='All'"/>
     <_GPRLine Include="}" />
   </ItemGroup>
   <WriteLinesToFile File="PackageReference.cs" Lines="@(_GPRLine)" Overwrite="True" />
 </Target>
 ```
-<sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer.Test/SolutionAnalyzer.Test.csproj#L26-L43' title='Snippet source file'>snippet source</a> | <a href='#snippet-generatepackagereferences' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer.Test/SolutionAnalyzer.Test.csproj#L24-L41' title='Snippet source file'>snippet source</a> | <a href='#snippet-generatepackagereferences' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 This will translate all `PackageReference` items in the project to a corresponding entry in the `PackageRefrence` class, so after the next build the file `PackageRefrence.cs` will look like this:
@@ -243,8 +241,9 @@ so this behavior will be enforced in the test:
 <!-- snippet: EnforceDescriptionAnalyzerTest_Verification -->
 <a id='snippet-enforcedescriptionanalyzertest_verification'></a>
 ```cs
-await new Test(source)
+await new Test
 {
+    TestCode = source,
     ReferenceAssemblies = Net60.AddPackages(PackageReference.TomsToolbox_Essentials),
     ExpectedDiagnostics =
     {
@@ -252,7 +251,7 @@ await new Test(source)
     },
 }.RunAsync();
 ```
-<sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer.Test/EnforceDescriptionAnalyzerTest.cs#L53-L62' title='Snippet source file'>snippet source</a> | <a href='#snippet-enforcedescriptionanalyzertest_verification' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer.Test/EnforceDescriptionAnalyzerTest.cs#L56-L66' title='Snippet source file'>snippet source</a> | <a href='#snippet-enforcedescriptionanalyzertest_verification' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 Now the test fails, because the analyzer is still empty, and does not generate the desired warnings yet, 
@@ -364,14 +363,15 @@ public class SuppressNullForgivingWarningTest
             }
             """;
 
-        await new Test(source)
+        await new Test
         {
+            TestCode = source,
             SolutionTransforms = { WithProjectCompilationOptions(o => o.WithNullableContextOptions(NullableContextOptions.Disable)) }
         }
         .RunAsync();
     }
 ```
-<sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer.Test/SuppressNullForgivingWarningTest.cs#L13-L33' title='Snippet source file'>snippet source</a> | <a href='#snippet-basicsuppressiontestsetup' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer.Test/SuppressNullForgivingWarningTest.cs#L13-L34' title='Snippet source file'>snippet source</a> | <a href='#snippet-basicsuppressiontestsetup' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 ### Prepare the test to include the analyzer with the diagnostic to suppress
@@ -387,7 +387,7 @@ Additionally to the package reference the assembly of the analyzer needs to be r
   <Reference Include="$(PkgNullable_Extended_Analyzer)\analyzers\dotnet\cs\Nullable.Extended.Analyzer.dll" />
 </ItemGroup>
 ```
-<sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer.Test/SolutionAnalyzer.Test.csproj#L19-L24' title='Snippet source file'>snippet source</a> | <a href='#snippet-referencenullableextendedanalyzer' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer.Test/SolutionAnalyzer.Test.csproj#L17-L22' title='Snippet source file'>snippet source</a> | <a href='#snippet-referencenullableextendedanalyzer' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 Since there is now more than one analyzer involved, the test framework needs to be extended to allow for adding the additional analyzer that the tests should run against.
@@ -400,11 +400,6 @@ public class SuppressorTest<TAnalyzer, TSuppressor> : AnalyzerTest<TAnalyzer>
     where TAnalyzer : DiagnosticAnalyzer, new()
     where TSuppressor : DiagnosticAnalyzer, new()
 {
-    public SuppressorTest(string? source = null)
-        : base(source)
-    {
-    }
-
     protected override IEnumerable<DiagnosticAnalyzer> GetDiagnosticAnalyzers()
     {
         return base.GetDiagnosticAnalyzers().Append(new TSuppressor());
@@ -418,7 +413,7 @@ public class SuppressorTest<TAnalyzer, TSuppressor> : AnalyzerTest<TAnalyzer>
     }
 }
 ```
-<sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer.Test/CSharpAnalyzerTest.cs#L30-L52' title='Snippet source file'>snippet source</a> | <a href='#snippet-csharpsuppressortest' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer.Test/CSharpAnalyzerTest.cs#L25-L42' title='Snippet source file'>snippet source</a> | <a href='#snippet-csharpsuppressortest' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 With this preconditions the suppressor test can be implemented:
@@ -440,8 +435,9 @@ public async Task NullForgivingWarningIsSuppressedForInitOnlyProperties()
         }
         """;
 
-    await new Test(source)
+    await new Test
     {
+        TestCode = source,
         ReferenceAssemblies = Net60.AddPackages(PackageReference.TomsToolbox_Essentials),
         ExpectedDiagnostics =
         {
@@ -452,7 +448,7 @@ public async Task NullForgivingWarningIsSuppressedForInitOnlyProperties()
     .RunAsync();
 }
 ```
-<sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer.Test/SuppressNullForgivingWarningTest.cs#L35-L61' title='Snippet source file'>snippet source</a> | <a href='#snippet-suppressnullforgivingwarningtest' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer.Test/SuppressNullForgivingWarningTest.cs#L36-L63' title='Snippet source file'>snippet source</a> | <a href='#snippet-suppressnullforgivingwarningtest' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 And based on the test the suppression analyzer can be implemented:
