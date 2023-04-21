@@ -1,13 +1,14 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
+    <PackageReference Include="AnalyzerTesting.CSharp.Extensions" Version="1.0.0" />
     <PackageReference Include="JetBrains.Annotations" Version="2022.3.1" PrivateAssets="All" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.5.0" />
     <PackageReference Include="MSTest.TestAdapter" Version="3.0.2" />
     <PackageReference Include="MSTest.TestFramework" Version="3.0.2" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Analyzer.Testing.MSTest" Version="1.1.1" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="4.5.0" />
-    <PackageReference Include="TomsToolbox.Essentials" Version="2.8.5" />
+    <PackageReference Include="TomsToolbox.Essentials" Version="2.8.7" />
   </ItemGroup>
 
   <ItemGroup>
@@ -16,7 +17,7 @@
 
   <!-- begin-snippet: ReferenceNullableExtendedAnalyzer  -->
   <ItemGroup>
-    <PackageReference Include="Nullable.Extended.Analyzer" Version="1.10.4539" PrivateAssets="all" GeneratePathProperty="true"/>
+    <PackageReference Include="Nullable.Extended.Analyzer" Version="1.10.4539" PrivateAssets="all" GeneratePathProperty="true" />
     <Reference Include="$(PkgNullable_Extended_Analyzer)\analyzers\dotnet\cs\Nullable.Extended.Analyzer.dll" />
   </ItemGroup>
   <!-- end-snippet -->
@@ -32,8 +33,8 @@
       <_GPRLine Include="[System.CodeDom.Compiler.GeneratedCode(&quot;MSBuild&quot;, null)]" />
       <_GPRLine Include="internal static class PackageReference" />
       <_GPRLine Include="{" />
-      <_GPRLine Include="%20%20%20%20public static readonly PackageIdentity $([System.String]::Copy(&quot;%(PackageReference.Identity)&quot;).Replace(&quot;.&quot;, &quot;_&quot;)) = new(&quot;%(PackageReference.Identity)&quot;, &quot;%(PackageReference.Version)&quot;)%3B"
-                Condition="('$(ExcludeFromPackageReferenceSource)'=='' OR !$([System.Text.RegularExpressions.Regex]::IsMatch(%(PackageReference.Identity), $(ExcludeFromPackageReferenceSource), RegexOptions.IgnoreCase))) AND '%(PackageReference.PrivateAssets)'!='All'"/>
+      <_GPRLine Include="%20%20%20%20public static readonly PackageIdentity $([System.String]::Copy(&quot;%(PackageReference.Identity)&quot;).Replace(&quot;.&quot;, &quot;_&quot;)) = new(&quot;%(PackageReference.Identity)&quot;, &quot;%(PackageReference.Version)&quot;)%3B" 
+                Condition="('$(ExcludeFromPackageReferenceSource)'=='' OR !$([System.Text.RegularExpressions.Regex]::IsMatch(%(PackageReference.Identity), $(ExcludeFromPackageReferenceSource), RegexOptions.IgnoreCase))) AND '%(PackageReference.PrivateAssets)'!='All'" />
       <_GPRLine Include="}" />
     </ItemGroup>
     <WriteLinesToFile File="PackageReference.cs" Lines="@(_GPRLine)" Overwrite="True" />

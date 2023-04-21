@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
     <PackageReference Include="Nullable.Extended.Analyzer" Version="1.10.4539" PrivateAssets="all" />
-    <PackageReference Include="TomsToolbox.Essentials" Version="2.8.5" />
+    <PackageReference Include="TomsToolbox.Essentials" Version="2.8.7" />
     <PackageReference Include="MarkdownSnippets.MsBuild" Version="24.5.1" PrivateAssets="All" />
   </ItemGroup>
 </Project>

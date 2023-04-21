@@ -1,13 +1,14 @@
 ﻿using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Testing;
 using Microsoft.CodeAnalysis.Testing;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace SolutionAnalyzer.Test;
 
 // begin-snippet:  BasicTestSetup
-using Test = AnalyzerTest<EnforceDescriptionAnalyzer>;
-using static CSharpAnalyzerTestExtensions;
+
+using Test = CSharpAnalyzerTest<EnforceDescriptionAnalyzer, TestVerifier>;
 using static ReferenceAssemblies.Net;
 
 [TestClass]
@@ -89,19 +90,32 @@ public class EnforceDescriptionAnalyzerTest
             }
             """;
 
+        // Using object initializer notation
         await new Test
         {
             TestCode = source,
             ReferenceAssemblies = Net60.AddPackages(PackageReference.TomsToolbox_Essentials),
             SolutionTransforms =
             {
-                UseLanguageVersion(LanguageVersion.CSharp7_2),
-                WithProjectCompilationOptions(c => c.WithNullableContextOptions(NullableContextOptions.Disable))
+                WithLanguageVersion(LanguageVersion.CSharp7_2),
+                WithProjectCompilationOptions(c => c.WithNullableContextOptions(NullableContextOptions.Disable)),
+                AddAssemblyReferences()
             },
             ExpectedDiagnostics =
             {
                 Diagnostics.TextPropertyHasNoDescription.AsResult().WithArguments("BadProperty").WithLocation(0)
             },
         }.RunAsync();
+
+        // Using fluent notation
+        await new Test()
+            .AddSources(source)
+            .WithReferenceAssemblies(Net60)
+            .WithLanguageVersion(LanguageVersion.CSharp7_2)
+            .WithProjectCompilationOptions(c => c.WithNullableContextOptions(NullableContextOptions.Disable))
+            .AddPackages(PackageReference.TomsToolbox_Essentials)
+            .AddReferences()
+            .AddExpectedDiagnostics(Diagnostics.TextPropertyHasNoDescription.AsResult().WithArguments("BadProperty").WithLocation(0))
+            .RunAsync();
     }
 }

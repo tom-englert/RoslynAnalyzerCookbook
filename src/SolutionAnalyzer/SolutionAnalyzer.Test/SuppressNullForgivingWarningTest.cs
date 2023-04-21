@@ -6,11 +6,10 @@ using Nullable.Extended.Analyzer;
 
 namespace SolutionAnalyzer.Test
 {
-    using Test = SuppressorTest<NullForgivingDetectionAnalyzer, SuppressNullForgivingWarningAnalyzer>;
-    using static CSharpAnalyzerTestExtensions;
+    // begin-snippet:  BasicSuppressionTestSetup
+    using Test = CSharpDiagnosticSuppressorTest<NullForgivingDetectionAnalyzer, SuppressNullForgivingWarningAnalyzer, TestVerifier>;
     using static ReferenceAssemblies.Net;
 
-    // begin-snippet:  BasicSuppressionTestSetup
     [TestClass]
     public class SuppressNullForgivingWarningTest
     {
@@ -27,6 +26,7 @@ namespace SolutionAnalyzer.Test
             await new Test
             {
                 TestCode = source,
+                ReferenceAssemblies = Net60,
                 SolutionTransforms = { WithProjectCompilationOptions(o => o.WithNullableContextOptions(NullableContextOptions.Disable)) }
             }
             .RunAsync();
