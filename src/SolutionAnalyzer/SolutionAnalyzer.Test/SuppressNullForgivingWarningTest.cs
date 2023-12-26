@@ -36,6 +36,7 @@ namespace SolutionAnalyzer.Test
         // begin-snippet:  SuppressNullForgivingWarningTest
         private static readonly NullForgivingDetectionAnalyzer NullForgivingDetectionAnalyzer = new();
         private static readonly DiagnosticDescriptor Nx0002 = NullForgivingDetectionAnalyzer.SupportedDiagnostics.Single(item => item.Id == "NX0002");
+        private static readonly DiagnosticDescriptor Nx0004 = NullForgivingDetectionAnalyzer.SupportedDiagnostics.Single(item => item.Id == "NX0004");
 
         [TestMethod]
         public async Task NullForgivingWarningIsSuppressedForInitOnlyProperties()
@@ -54,7 +55,7 @@ namespace SolutionAnalyzer.Test
                 ReferenceAssemblies = Net60.AddPackages(PackageReference.TomsToolbox_Essentials),
                 ExpectedDiagnostics =
                 {
-                    Nx0002.AsResult().WithLocation(0).WithArguments("InitOnly").WithIsSuppressed(true),
+                    Nx0004.AsResult().WithLocation(0).WithArguments("InitOnly").WithIsSuppressed(true),
                     Nx0002.AsResult().WithLocation(1).WithArguments("Normal").WithIsSuppressed(false)
                 }
             }

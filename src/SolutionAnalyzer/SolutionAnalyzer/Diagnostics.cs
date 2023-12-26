@@ -16,8 +16,12 @@ public static class Diagnostics
 
     // begin-snippet:  Diagnostics_Suppressor
     public static readonly SuppressionDescriptor SuppressNullForgivingWarning = new("CUS002",
-        "NX0002",
+        "NX0004",
         "Null forgiving is a standard pattern for init only properties");
     // end-snippet
 
+    public static readonly SuppressionDescriptor SuppressNullableOnEntities = new("CUS003",
+        "CS8618",
+        "Pattern by EF"
+    );
 }

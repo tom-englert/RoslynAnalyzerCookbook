@@ -203,7 +203,7 @@ using Microsoft.CodeAnalysis.Testing;
 internal static class PackageReference
 {
     public static readonly PackageIdentity AnalyzerTesting_CSharp_Extensions = new("AnalyzerTesting.CSharp.Extensions", "1.0.0");
-    public static readonly PackageIdentity TomsToolbox_Essentials = new("TomsToolbox.Essentials", "2.8.7");
+    public static readonly PackageIdentity TomsToolbox_Essentials = new("TomsToolbox.Essentials", "2.11.0");
 }
 ```
 <sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer.Test/PackageReference.cs#L1-L9' title='Snippet source file'>snippet source</a> | <a href='#snippet-PackageReference.cs' title='Start of snippet'>anchor</a></sup>
@@ -309,7 +309,7 @@ As a first step the scaffold is added to the solution:
 <a id='snippet-diagnostics_suppressor'></a>
 ```cs
 public static readonly SuppressionDescriptor SuppressNullForgivingWarning = new("CUS002",
-    "NX0002",
+    "NX0004",
     "Null forgiving is a standard pattern for init only properties");
 ```
 <sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer/Diagnostics.cs#L17-L21' title='Snippet source file'>snippet source</a> | <a href='#snippet-diagnostics_suppressor' title='Start of snippet'>anchor</a></sup>
@@ -369,7 +369,7 @@ Additionally to the package reference the assembly of the analyzer needs to be r
 <a id='snippet-referencenullableextendedanalyzer'></a>
 ```csproj
 <ItemGroup>
-  <PackageReference Include="Nullable.Extended.Analyzer" Version="1.10.4539" PrivateAssets="all" GeneratePathProperty="true" />
+  <PackageReference Include="Nullable.Extended.Analyzer" Version="1.15.6169" PrivateAssets="all" GeneratePathProperty="true" />
   <Reference Include="$(PkgNullable_Extended_Analyzer)\analyzers\dotnet\cs\Nullable.Extended.Analyzer.dll" />
 </ItemGroup>
 ```
@@ -383,6 +383,7 @@ Implement the test for the suppressor:
 ```cs
 private static readonly NullForgivingDetectionAnalyzer NullForgivingDetectionAnalyzer = new();
 private static readonly DiagnosticDescriptor Nx0002 = NullForgivingDetectionAnalyzer.SupportedDiagnostics.Single(item => item.Id == "NX0002");
+private static readonly DiagnosticDescriptor Nx0004 = NullForgivingDetectionAnalyzer.SupportedDiagnostics.Single(item => item.Id == "NX0004");
 
 [TestMethod]
 public async Task NullForgivingWarningIsSuppressedForInitOnlyProperties()
@@ -401,14 +402,14 @@ public async Task NullForgivingWarningIsSuppressedForInitOnlyProperties()
         ReferenceAssemblies = Net60.AddPackages(PackageReference.TomsToolbox_Essentials),
         ExpectedDiagnostics =
         {
-            Nx0002.AsResult().WithLocation(0).WithArguments("InitOnly").WithIsSuppressed(true),
+            Nx0004.AsResult().WithLocation(0).WithArguments("InitOnly").WithIsSuppressed(true),
             Nx0002.AsResult().WithLocation(1).WithArguments("Normal").WithIsSuppressed(false)
         }
     }
     .RunAsync();
 }
 ```
-<sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer.Test/SuppressNullForgivingWarningTest.cs#L36-L63' title='Snippet source file'>snippet source</a> | <a href='#snippet-suppressnullforgivingwarningtest' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer.Test/SuppressNullForgivingWarningTest.cs#L36-L64' title='Snippet source file'>snippet source</a> | <a href='#snippet-suppressnullforgivingwarningtest' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 And based on the test the suppression analyzer can be implemented:
