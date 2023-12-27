@@ -11,6 +11,12 @@
     <PackageReference Include="TomsToolbox.Essentials" Version="2.11.0" />
   </ItemGroup>
 
+  <ItemGroup Label="Transitive fixes">
+    <PackageReference Include="NuGet.Common" Version="6.8.0" />
+    <PackageReference Include="NuGet.Protocol" Version="6.8.0" />
+    <PackageReference Include="NuGet.Resolver" Version="6.8.0" />
+  </ItemGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\SolutionAnalyzer\SolutionAnalyzer.csproj" />
   </ItemGroup>
@@ -25,7 +31,7 @@
   <!-- begin-snippet: GeneratePackageReferences-->
   <Target Name="_GeneratePackageReferences" BeforeTargets="Build">
     <PropertyGroup>
-      <ExcludeFromPackageReferenceSource>Microsoft|MSTest</ExcludeFromPackageReferenceSource>
+      <ExcludeFromPackageReferenceSource>Microsoft|MSTest|NuGet</ExcludeFromPackageReferenceSource>
     </PropertyGroup>
     <ItemGroup>
       <_GPRLine Include="// ReSharper disable All" />
@@ -33,7 +39,7 @@
       <_GPRLine Include="[System.CodeDom.Compiler.GeneratedCode(&quot;MSBuild&quot;, null)]" />
       <_GPRLine Include="internal static class PackageReference" />
       <_GPRLine Include="{" />
-      <_GPRLine Include="%20%20%20%20public static readonly PackageIdentity $([System.String]::Copy(&quot;%(PackageReference.Identity)&quot;).Replace(&quot;.&quot;, &quot;_&quot;)) = new(&quot;%(PackageReference.Identity)&quot;, &quot;%(PackageReference.Version)&quot;)%3B" 
+      <_GPRLine Include="%20%20%20%20public static readonly PackageIdentity $([System.String]::Copy(&quot;%(PackageReference.Identity)&quot;).Replace(&quot;.&quot;, &quot;_&quot;)) = new(&quot;%(PackageReference.Identity)&quot;, &quot;%(PackageReference.Version)&quot;)%3B"
                 Condition="('$(ExcludeFromPackageReferenceSource)'=='' OR !$([System.Text.RegularExpressions.Regex]::IsMatch(%(PackageReference.Identity), $(ExcludeFromPackageReferenceSource), RegexOptions.IgnoreCase))) AND '%(PackageReference.PrivateAssets)'!='All'" />
       <_GPRLine Include="}" />
     </ItemGroup>

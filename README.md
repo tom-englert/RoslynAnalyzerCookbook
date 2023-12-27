@@ -174,7 +174,7 @@ It will be done by adding this build target to the test project:
 ```csproj
 <Target Name="_GeneratePackageReferences" BeforeTargets="Build">
   <PropertyGroup>
-    <ExcludeFromPackageReferenceSource>Microsoft|MSTest</ExcludeFromPackageReferenceSource>
+    <ExcludeFromPackageReferenceSource>Microsoft|MSTest|NuGet</ExcludeFromPackageReferenceSource>
   </PropertyGroup>
   <ItemGroup>
     <_GPRLine Include="// ReSharper disable All" />
@@ -182,14 +182,14 @@ It will be done by adding this build target to the test project:
     <_GPRLine Include="[System.CodeDom.Compiler.GeneratedCode(&quot;MSBuild&quot;, null)]" />
     <_GPRLine Include="internal static class PackageReference" />
     <_GPRLine Include="{" />
-    <_GPRLine Include="%20%20%20%20public static readonly PackageIdentity $([System.String]::Copy(&quot;%(PackageReference.Identity)&quot;).Replace(&quot;.&quot;, &quot;_&quot;)) = new(&quot;%(PackageReference.Identity)&quot;, &quot;%(PackageReference.Version)&quot;)%3B" 
+    <_GPRLine Include="%20%20%20%20public static readonly PackageIdentity $([System.String]::Copy(&quot;%(PackageReference.Identity)&quot;).Replace(&quot;.&quot;, &quot;_&quot;)) = new(&quot;%(PackageReference.Identity)&quot;, &quot;%(PackageReference.Version)&quot;)%3B"
               Condition="('$(ExcludeFromPackageReferenceSource)'=='' OR !$([System.Text.RegularExpressions.Regex]::IsMatch(%(PackageReference.Identity), $(ExcludeFromPackageReferenceSource), RegexOptions.IgnoreCase))) AND '%(PackageReference.PrivateAssets)'!='All'" />
     <_GPRLine Include="}" />
   </ItemGroup>
   <WriteLinesToFile File="PackageReference.cs" Lines="@(_GPRLine)" Overwrite="True" />
 </Target>
 ```
-<sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer.Test/SolutionAnalyzer.Test.csproj#L25-L42' title='Snippet source file'>snippet source</a> | <a href='#snippet-generatepackagereferences' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer.Test/SolutionAnalyzer.Test.csproj#L31-L48' title='Snippet source file'>snippet source</a> | <a href='#snippet-generatepackagereferences' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 This will translate all `PackageReference` items in the project to a corresponding entry in the `PackageRefrence` class, so after the next build the file `PackageRefrence.cs` will look like this:
@@ -375,7 +375,7 @@ Additionally to the package reference the assembly of the analyzer needs to be r
   <Reference Include="$(PkgNullable_Extended_Analyzer)\analyzers\dotnet\cs\Nullable.Extended.Analyzer.dll" />
 </ItemGroup>
 ```
-<sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer.Test/SolutionAnalyzer.Test.csproj#L18-L23' title='Snippet source file'>snippet source</a> | <a href='#snippet-referencenullableextendedanalyzer' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer.Test/SolutionAnalyzer.Test.csproj#L24-L29' title='Snippet source file'>snippet source</a> | <a href='#snippet-referencenullableextendedanalyzer' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 Implement the test for the suppressor:
