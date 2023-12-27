@@ -1,9 +1,4 @@
-﻿using Microsoft.CodeAnalysis;
-using System.Collections.Immutable;
-
-using Microsoft.CodeAnalysis.CSharp.Testing;
-using Microsoft.CodeAnalysis.Diagnostics;
-using Microsoft.CodeAnalysis.Testing;
+﻿using Microsoft.CodeAnalysis.Testing;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace SolutionAnalyzer.Test
@@ -13,16 +8,11 @@ namespace SolutionAnalyzer.Test
     [TestClass]
     public class SuppressNullableOnEntitiesTest
     {
-        class Test : CSharpAnalyzerTest<SuppressNullableOnEntitiesAnalyzer, TestVerifier>
+        class Test : CSharpDiagnosticSuppressorTest<SuppressNullableOnEntitiesAnalyzer, TestVerifier>
         {
             public Test()
             {
-                this.WithProjectCompilationOptions(ExtensionMethods.WithCSharpDefaults);
-            }
-
-            protected override CompilationWithAnalyzers CreateCompilationWithAnalyzers(Compilation compilation, ImmutableArray<DiagnosticAnalyzer> analyzers, AnalyzerOptions options, CancellationToken cancellationToken)
-            {
-                return compilation.WithAnalyzers(analyzers, new CompilationWithAnalyzersOptions(options, null, true, false, true));
+                this.WithProjectCompilationOptions(options => options.WithCSharpDefaults());
             }
         }
 
