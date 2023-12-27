@@ -11,8 +11,10 @@ namespace SolutionAnalyzer
     [DiagnosticAnalyzer(LanguageNames.CSharp)]
     public class SuppressNullForgivingWarningAnalyzer : DiagnosticSuppressor
     {
+        private static readonly SuppressionDescriptor SuppressionDescriptor = Diagnostics.SuppressNullForgivingWarning;
+
         public override ImmutableArray<SuppressionDescriptor> SupportedSuppressions { get; } =
-            ImmutableArray.Create(Diagnostics.SuppressNullForgivingWarning);
+            ImmutableArray.Create(SuppressionDescriptor);
         // end-snippet
 
         // begin-snippet:  SuppressNullForgivingAnalyzer_Implementation
@@ -37,7 +39,7 @@ namespace SolutionAnalyzer
 
                 if (propertyDeclaration.AccessorList?.Accessors.Any(item => item.IsKind(SyntaxKind.InitAccessorDeclaration)) == true)
                 {
-                    context.ReportSuppression(Suppression.Create(Diagnostics.SuppressNullForgivingWarning, diagnostic));
+                    context.ReportSuppression(Suppression.Create(SuppressionDescriptor, diagnostic));
                 }
             }
         }

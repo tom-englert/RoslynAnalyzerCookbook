@@ -41,7 +41,7 @@ namespace SolutionAnalyzer
                     })
                     continue;
 
-                if (name.ToFullString()?.EndsWith(".Entities") == true)
+                if (name.ToString()?.EndsWith(".Entities") == true)
                 {
                     context.ReportSuppression(Suppression.Create(SuppressionDescriptor, diagnostic));
                 }

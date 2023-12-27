@@ -322,10 +322,12 @@ public static readonly SuppressionDescriptor SuppressNullForgivingWarning = new(
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public class SuppressNullForgivingWarningAnalyzer : DiagnosticSuppressor
 {
+    private static readonly SuppressionDescriptor SuppressionDescriptor = Diagnostics.SuppressNullForgivingWarning;
+
     public override ImmutableArray<SuppressionDescriptor> SupportedSuppressions { get; } =
-        ImmutableArray.Create(Diagnostics.SuppressNullForgivingWarning);
+        ImmutableArray.Create(SuppressionDescriptor);
 ```
-<sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer/SuppressNullForgivingWarningAnalyzer.cs#L10-L16' title='Snippet source file'>snippet source</a> | <a href='#snippet-suppressnullforgivinganalyzer_declaration' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer/SuppressNullForgivingWarningAnalyzer.cs#L10-L18' title='Snippet source file'>snippet source</a> | <a href='#snippet-suppressnullforgivinganalyzer_declaration' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 #### Add the test scaffold
@@ -438,10 +440,10 @@ public override void ReportSuppressions(SuppressionAnalysisContext context)
 
         if (propertyDeclaration.AccessorList?.Accessors.Any(item => item.IsKind(SyntaxKind.InitAccessorDeclaration)) == true)
         {
-            context.ReportSuppression(Suppression.Create(Diagnostics.SuppressNullForgivingWarning, diagnostic));
+            context.ReportSuppression(Suppression.Create(SuppressionDescriptor, diagnostic));
         }
     }
 }
 ```
-<sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer/SuppressNullForgivingWarningAnalyzer.cs#L18-L44' title='Snippet source file'>snippet source</a> | <a href='#snippet-suppressnullforgivinganalyzer_implementation' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer/SuppressNullForgivingWarningAnalyzer.cs#L20-L46' title='Snippet source file'>snippet source</a> | <a href='#snippet-suppressnullforgivinganalyzer_implementation' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
