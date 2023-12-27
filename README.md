@@ -293,6 +293,13 @@ Since the analyzer should be referenced by any project of the solution, it's a g
 <sup><a href='/src/Directory.Build.props#L9-L13' title='Snippet source file'>snippet source</a> | <a href='#snippet-analyzerintegration' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
+#### Pitfalls
+When referencing a project as analyzer, the analyzer assembly will be loaded into the appdomain of Visual Studio and thus can't be updated.
+
+So while changes to the analyzer immediately show up in the build process, the Visual Studio UI got stuck with the old analyzer and may show nothing or false positives.
+
+You need to restart the Visual Studio process, so changes to the analyzer also show up in the Visual Studio UI.
+
 ## Use case #2
 
 In the project the [Nullable.Extended.Analyzer](https://github.com/tom-englert/Nullable.Extended) is used to force documentation of the 
