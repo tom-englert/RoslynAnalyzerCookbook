@@ -298,7 +298,7 @@ When referencing a project as analyzer, the analyzer assembly will be loaded int
 
 So while changes to the analyzer immediately show up in the build process, the Visual Studio UI got stuck with the old analyzer and may show nothing or false positives.
 
-You need to restart the Visual Studio process, so changes to the analyzer also show up in the Visual Studio UI.
+In this case the Visual Studio process must be restarted to make changes to the analyzer also show up in the Visual Studio UI.
 
 ## Use case #2
 

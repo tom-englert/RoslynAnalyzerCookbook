@@ -1,6 +1,7 @@
 ﻿using System.Collections.Immutable;
 
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 
@@ -29,22 +30,42 @@ namespace SolutionAnalyzer
                 var sourceSpan = location.SourceSpan;
                 var elementNode = root.FindNode(sourceSpan);
 
+                // Just for demo, two times the same check:
+
+                // #1 check by syntax tree
+
                 if (elementNode is not PropertyDeclarationSyntax
                     {
                         Parent: ClassDeclarationSyntax
                         {
-                            Parent: FileScopedNamespaceDeclarationSyntax
+                            Parent: BaseNamespaceDeclarationSyntax
                             {
-                                Name: QualifiedNameSyntax name
+                                Name: QualifiedNameSyntax nameSyntax
                             }
                         }
                     })
                     continue;
 
-                if (name.ToString()?.EndsWith(".Entities") == true)
-                {
-                    context.ReportSuppression(Suppression.Create(SuppressionDescriptor, diagnostic));
-                }
+                if (nameSyntax.ToString()?.EndsWith(".Entities") != true)
+                    continue;
+
+                // #2 same check in semantic model
+
+                if (context.GetSemanticModel(sourceTree).GetDeclaredSymbol(elementNode) is not IPropertySymbol
+                    {
+                        ContainingNamespace:
+                        {
+                            Name: { } namespaceName
+                        }
+                    })
+                    continue;
+
+                if (namespaceName != "Entities")
+                    continue;
+
+                // Check successful, suppress diagnostic:
+
+                context.ReportSuppression(Suppression.Create(SuppressionDescriptor, diagnostic));
             }
         }
     }
