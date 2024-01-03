@@ -24,14 +24,18 @@ namespace SolutionAnalyzer
 
             foreach (var diagnostic in context.ReportedDiagnostics)
             {
-                var location = diagnostic.Location;
-                var sourceTree = location.SourceTree;
-                if (sourceTree == null)
+                if (diagnostic is not
+                    {
+                        Location:
+                        {
+                            SourceTree: { } sourceTree,
+                            SourceSpan: var sourceSpan
+                        }
+                    })
                     continue;
 
                 var root = sourceTree.GetRoot(cancellationToken);
 
-                var sourceSpan = location.SourceSpan;
                 var elementNode = root.FindNode(sourceSpan);
 
                 if (elementNode.Parent is not EqualsValueClauseSyntax { Parent: PropertyDeclarationSyntax propertyDeclaration })
