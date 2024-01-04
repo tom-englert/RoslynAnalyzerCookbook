@@ -21,6 +21,7 @@ namespace SolutionAnalyzer
             foreach (var diagnostic in context.ReportedDiagnostics)
             {
                 // diagnostic.Location is the constructor, if the class has one, while .AdditionalLocations[0] always points to the property.
+
                 var location = diagnostic.AdditionalLocations[0];
 
                 if (location is not
@@ -55,16 +56,11 @@ namespace SolutionAnalyzer
 
                 // #2 same check in semantic model
 
-                if (context.GetSemanticModel(sourceTree).GetDeclaredSymbol(elementNode) is not IPropertySymbol
-                    {
-                        ContainingNamespace:
-                        {
-                            Name: { } namespaceName
-                        }
-                    })
-                    continue;
+                var declaredSymbol = context
+                    .GetSemanticModel(sourceTree)
+                    .GetDeclaredSymbol(elementNode);
 
-                if (namespaceName != "Entities")
+                if (declaredSymbol is not IPropertySymbol { ContainingNamespace.Name: "Entities" })
                     continue;
 
                 // Check successful, suppress diagnostic:
