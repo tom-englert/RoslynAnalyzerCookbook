@@ -14,6 +14,7 @@ simplify the testing scaffold and to workaround some issues of the V1.1.1 analyz
 - Using [RoslynAnalyzerTesting.CSharp.Extensions](https://github.com/tom-englert/RoslynAnalyzerTesting.CSharp.Extensions) package to ease testing.
 - [Referencing NuGet packages](#referencing-a-nuget-package) in the test code, automated by MSBuild.
 - [Integration of the analyzers into the solution](#integrate-the-analyzer-in-the-solution) without the need to create a package or install a Visual Studio extension.
+- [Pitfalls](#pitfalls) to avoid.
 
 ## Use cases
 - [Diagnostic analyzer to conditionally enforce coding rules](#use-case-1)
@@ -293,13 +294,6 @@ Since the analyzer should be referenced by any project of the solution, it's a g
 <sup><a href='/src/Directory.Build.props#L9-L13' title='Snippet source file'>snippet source</a> | <a href='#snippet-analyzerintegration' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
-#### Pitfalls
-When referencing a project as analyzer, the analyzer assembly will be loaded into the appdomain of Visual Studio and thus can't be updated.
-
-So while changes to the analyzer immediately show up in the build process, the Visual Studio UI got stuck with the old analyzer and may show nothing or false positives.
-
-In this case the Visual Studio process must be restarted to make changes to the analyzer also show up in the Visual Studio UI.
-
 ## Use case #2
 
 In the project the [Nullable.Extended.Analyzer](https://github.com/tom-englert/Nullable.Extended) is used to force documentation of the 
@@ -432,14 +426,18 @@ public override void ReportSuppressions(SuppressionAnalysisContext context)
 
     foreach (var diagnostic in context.ReportedDiagnostics)
     {
-        var location = diagnostic.Location;
-        var sourceTree = location.SourceTree;
-        if (sourceTree == null)
+        if (diagnostic is not
+            {
+                Location:
+                {
+                    SourceTree: { } sourceTree,
+                    SourceSpan: var sourceSpan
+                }
+            })
             continue;
 
         var root = sourceTree.GetRoot(cancellationToken);
 
-        var sourceSpan = location.SourceSpan;
         var elementNode = root.FindNode(sourceSpan);
 
         if (elementNode.Parent is not EqualsValueClauseSyntax { Parent: PropertyDeclarationSyntax propertyDeclaration })
@@ -452,5 +450,29 @@ public override void ReportSuppressions(SuppressionAnalysisContext context)
     }
 }
 ```
-<sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer/SuppressNullForgivingWarningAnalyzer.cs#L20-L46' title='Snippet source file'>snippet source</a> | <a href='#snippet-suppressnullforgivinganalyzer_implementation' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer/SuppressNullForgivingWarningAnalyzer.cs#L20-L50' title='Snippet source file'>snippet source</a> | <a href='#snippet-suppressnullforgivinganalyzer_implementation' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
+
+## Pitfalls
+
+### Analyzer seems to be not functional
+
+When referencing a project as analyzer, the analyzer assembly will be loaded into the appdomain of Visual Studio and thus can't be updated.
+
+So while changes to the analyzer immediately show up in the build process, the Visual Studio UI got stuck with the old analyzer and may show nothing or false positives.
+
+In this case the Visual Studio process must be restarted to make changes to the analyzer also show up in the Visual Studio UI.
+
+### My test code generates unexpected errors
+
+Sometimes it may happen that there are lots of unexpected errors when running a test, e.g. 
+
+`error CS0246: The type or namespace name 'System' could not be found (are you missing a using directive or an assembly reference?)`
+
+This may be due to a corrupt nuget cache. 
+
+The framework reference assemblies are downloaded as nuget packages to the `%TEMP%\test-packages` folder. 
+When e.g. a test is interrupted while a package is still downloading, this cache might get corrupt.
+
+To fix this, simply delete the complete folder, and re-run the tests.
+
