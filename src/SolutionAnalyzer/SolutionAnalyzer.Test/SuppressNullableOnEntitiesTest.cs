@@ -45,6 +45,39 @@ namespace SolutionAnalyzer.Test
         }
 
         [TestMethod]
+        public async Task ErrorIsSuppressedInClassWithConstructors()
+        {
+            const string source = """
+                using System;
+                namespace ClassLibrary1.Entities;
+
+                public class User
+                {
+                    public {|#0:User|}(Guid id) 
+                    {
+                        Id = id;
+                    }
+                
+                    public Guid Id { get; init; }
+
+                    public string {|#1:Name|} { get; set; }
+                }
+                """;
+
+            var test = new Test
+            {
+                TestCode = source,
+                ReferenceAssemblies = Net60,
+                ExpectedDiagnostics =
+                {
+                    DiagnosticResult.CompilerError("CS8618").WithLocation(0).WithLocation(1).WithArguments("property", "Name").WithIsSuppressed(true)
+                }
+            };
+
+            await test.RunAsync();
+        }
+
+        [TestMethod]
         public async Task ErrorIsNotSuppressedInNonEntitiesScope()
         {
             const string source = """

@@ -20,16 +20,16 @@ namespace SolutionAnalyzer
 
             foreach (var diagnostic in context.ReportedDiagnostics)
             {
-                if (diagnostic is not
+                // diagnostic.Location is the constructor, if the class has one, while .AdditionalLocations[0] always points to the property.
+                var location = diagnostic.AdditionalLocations[0];
+
+                if (location is not
                     {
-                        Location:
-                        {
-                            SourceTree: { } sourceTree,
-                            SourceSpan: var sourceSpan
-                        }
+                        SourceTree: { } sourceTree,
+                        SourceSpan: var sourceSpan
                     })
                     continue;
-                
+
                 var root = sourceTree.GetRoot(cancellationToken);
 
                 var elementNode = root.FindNode(sourceSpan);
