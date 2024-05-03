@@ -74,7 +74,7 @@ In the first step the scaffold for the analyzers and the corresponding tests wil
 > loose track of the id's when having more than one analyzer in the project.
 > Also it's easier to reference the descriptors in the tests.
 <!-- snippet: Diagnostics -->
-<a id='snippet-diagnostics'></a>
+<a id='snippet-Diagnostics'></a>
 ```cs
 public static class Diagnostics
 {
@@ -86,26 +86,26 @@ public static class Diagnostics
         Category,
         DiagnosticSeverity.Error, isEnabledByDefault: true);
 ```
-<sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer/Diagnostics.cs#L5-L15' title='Snippet source file'>snippet source</a> | <a href='#snippet-diagnostics' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer/Diagnostics.cs#L5-L15' title='Snippet source file'>snippet source</a> | <a href='#snippet-Diagnostics' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 #### Add an empty analyzer class to the analyzer project
 
 <!-- snippet: EnforceDescriptionAnalyzer_Declaration -->
-<a id='snippet-enforcedescriptionanalyzer_declaration'></a>
+<a id='snippet-EnforceDescriptionAnalyzer_Declaration'></a>
 ```cs
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public class EnforceDescriptionAnalyzer : DiagnosticAnalyzer
 {
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } = ImmutableArray.Create(Diagnostics.TextPropertyHasNoDescription);
 ```
-<sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer/EnforceDescriptionAnalyzer.cs#L8-L13' title='Snippet source file'>snippet source</a> | <a href='#snippet-enforcedescriptionanalyzer_declaration' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer/EnforceDescriptionAnalyzer.cs#L8-L13' title='Snippet source file'>snippet source</a> | <a href='#snippet-EnforceDescriptionAnalyzer_Declaration' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 #### Add a basic test with a minimal class as source code.
 
 <!-- snippet: BasicTestSetup -->
-<a id='snippet-basictestsetup'></a>
+<a id='snippet-BasicTestSetup'></a>
 ```cs
 using Test = CSharpAnalyzerTest<EnforceDescriptionAnalyzer, TestVerifier>;
 using static ReferenceAssemblies.Net;
@@ -128,14 +128,14 @@ public class EnforceDescriptionAnalyzerTest
         await new Test { TestCode = source }.RunAsync();
     }
 ```
-<sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer.Test/EnforceDescriptionAnalyzerTest.cs#L9-L31' title='Snippet source file'>snippet source</a> | <a href='#snippet-basictestsetup' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer.Test/EnforceDescriptionAnalyzerTest.cs#L9-L31' title='Snippet source file'>snippet source</a> | <a href='#snippet-BasicTestSetup' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 ### Update the unit test to reflect the use case
 
 Now add the `Text` attribute to the properties of the test source:
 <!-- snippet: EnforceDescriptionAnalyzerTest_Source -->
-<a id='snippet-enforcedescriptionanalyzertest_source'></a>
+<a id='snippet-EnforceDescriptionAnalyzerTest_Source'></a>
 ```cs
 const string source = """
     using System.ComponentModel;
@@ -156,7 +156,7 @@ const string source = """
     }
     """;
 ```
-<sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer.Test/EnforceDescriptionAnalyzerTest.cs#L36-L55' title='Snippet source file'>snippet source</a> | <a href='#snippet-enforcedescriptionanalyzertest_source' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer.Test/EnforceDescriptionAnalyzerTest.cs#L36-L55' title='Snippet source file'>snippet source</a> | <a href='#snippet-EnforceDescriptionAnalyzerTest_Source' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 #### Referencing a NuGet package
@@ -171,7 +171,7 @@ A solution is to auto-generate a code snippet with all referenced package of the
 
 It will be done by adding this build target to the test project:
 <!-- snippet: GeneratePackageReferences -->
-<a id='snippet-generatepackagereferences'></a>
+<a id='snippet-GeneratePackageReferences'></a>
 ```csproj
 <Target Name="_GeneratePackageReferences" BeforeTargets="Build">
   <PropertyGroup>
@@ -190,7 +190,7 @@ It will be done by adding this build target to the test project:
   <WriteLinesToFile File="PackageReference.cs" Lines="@(_GPRLine)" Overwrite="True" />
 </Target>
 ```
-<sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer.Test/SolutionAnalyzer.Test.csproj#L31-L48' title='Snippet source file'>snippet source</a> | <a href='#snippet-generatepackagereferences' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer.Test/SolutionAnalyzer.Test.csproj#L31-L48' title='Snippet source file'>snippet source</a> | <a href='#snippet-GeneratePackageReferences' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 This will translate all `PackageReference` items in the project to a corresponding entry in the `PackageRefrence` class, so after the next build the file `PackageRefrence.cs` will look like this:
@@ -203,8 +203,8 @@ using Microsoft.CodeAnalysis.Testing;
 [System.CodeDom.Compiler.GeneratedCode("MSBuild", null)]
 internal static class PackageReference
 {
-    public static readonly PackageIdentity AnalyzerTesting_CSharp_Extensions = new("AnalyzerTesting.CSharp.Extensions", "1.1.0");
-    public static readonly PackageIdentity TomsToolbox_Essentials = new("TomsToolbox.Essentials", "2.11.0");
+    public static readonly PackageIdentity AnalyzerTesting_CSharp_Extensions = new("AnalyzerTesting.CSharp.Extensions", "1.1.2");
+    public static readonly PackageIdentity TomsToolbox_Essentials = new("TomsToolbox.Essentials", "2.14.0");
 }
 ```
 <sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer.Test/PackageReference.cs#L1-L9' title='Snippet source file'>snippet source</a> | <a href='#snippet-PackageReference.cs' title='Start of snippet'>anchor</a></sup>
@@ -222,7 +222,7 @@ Next step is to reflect the requirements of the use case, so the tests fails bec
 There should be an error reported for the `BadProperty`, since it has a `Text` but no `Description` attribute, 
 so this behavior will be enforced in the test:
 <!-- snippet: EnforceDescriptionAnalyzerTest_Verification -->
-<a id='snippet-enforcedescriptionanalyzertest_verification'></a>
+<a id='snippet-EnforceDescriptionAnalyzerTest_Verification'></a>
 ```cs
 await new Test
 {
@@ -234,7 +234,7 @@ await new Test
     },
 }.RunAsync();
 ```
-<sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer.Test/EnforceDescriptionAnalyzerTest.cs#L57-L67' title='Snippet source file'>snippet source</a> | <a href='#snippet-enforcedescriptionanalyzertest_verification' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer.Test/EnforceDescriptionAnalyzerTest.cs#L57-L67' title='Snippet source file'>snippet source</a> | <a href='#snippet-EnforceDescriptionAnalyzerTest_Verification' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 Now the test fails, because the analyzer is still empty, and does not generate the desired warnings yet, 
@@ -245,7 +245,7 @@ so finally the analyzer can be implemented using TDD.
 Since the use case is not too complex, the analyzer implementation is lightweight, too:
 
 <!-- snippet: EnforceDescriptionAnalyzer_Implementation -->
-<a id='snippet-enforcedescriptionanalyzer_implementation'></a>
+<a id='snippet-EnforceDescriptionAnalyzer_Implementation'></a>
 ```cs
 public override void Initialize(AnalysisContext context)
 {
@@ -270,7 +270,7 @@ private static void AnalyzeSymbol(SymbolAnalysisContext context)
     context.ReportDiagnostic(Diagnostic.Create(Diagnostics.TextPropertyHasNoDescription, property.Locations.First(), property.Name));
 }
 ```
-<sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer/EnforceDescriptionAnalyzer.cs#L15-L38' title='Snippet source file'>snippet source</a> | <a href='#snippet-enforcedescriptionanalyzer_implementation' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer/EnforceDescriptionAnalyzer.cs#L15-L38' title='Snippet source file'>snippet source</a> | <a href='#snippet-EnforceDescriptionAnalyzer_Implementation' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 It registers a symbol action to analyze all properties, and checks if the attributes are set according to the requirement.
@@ -285,13 +285,13 @@ To use the analyzer in any project, a reference to the analyzer project needs to
 Since the analyzer should be referenced by any project of the solution, it's a good idea to add the reference in the `Directory.Build.Props` file, and exclude the analyzer project by a condition to avoid circular references.
 
 <!-- snippet: AnalyzerIntegration -->
-<a id='snippet-analyzerintegration'></a>
+<a id='snippet-AnalyzerIntegration'></a>
 ```props
 <ItemGroup Condition='!$(MSBuildProjectName.ToUpperInvariant().EndsWith("ANALYZER")) AND !$(MSBuildProjectName.ToUpperInvariant().EndsWith(".TEST"))'>
   <ProjectReference Include="$(MSBuildThisFileDirectory)SolutionAnalyzer\SolutionAnalyzer\SolutionAnalyzer.csproj" ReferenceOutputAssembly="false" OutputItemType="Analyzer" />
 </ItemGroup>
 ```
-<sup><a href='/src/Directory.Build.props#L9-L13' title='Snippet source file'>snippet source</a> | <a href='#snippet-analyzerintegration' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/Directory.Build.props#L9-L13' title='Snippet source file'>snippet source</a> | <a href='#snippet-AnalyzerIntegration' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 ## Use case #2
@@ -307,18 +307,18 @@ As a first step the scaffold is added to the solution:
 
 #### Define the diagnostic descriptor
 <!-- snippet: Diagnostics_Suppressor -->
-<a id='snippet-diagnostics_suppressor'></a>
+<a id='snippet-Diagnostics_Suppressor'></a>
 ```cs
 public static readonly SuppressionDescriptor SuppressNullForgivingWarning = new("CUS002",
     "NX0004",
     "Null forgiving is a standard pattern for init only properties");
 ```
-<sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer/Diagnostics.cs#L17-L21' title='Snippet source file'>snippet source</a> | <a href='#snippet-diagnostics_suppressor' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer/Diagnostics.cs#L17-L21' title='Snippet source file'>snippet source</a> | <a href='#snippet-Diagnostics_Suppressor' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 #### Add an empty analyzer
 <!-- snippet: SuppressNullForgivingAnalyzer_Declaration -->
-<a id='snippet-suppressnullforgivinganalyzer_declaration'></a>
+<a id='snippet-SuppressNullForgivingAnalyzer_Declaration'></a>
 ```cs
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public class SuppressNullForgivingWarningAnalyzer : DiagnosticSuppressor
@@ -328,12 +328,12 @@ public class SuppressNullForgivingWarningAnalyzer : DiagnosticSuppressor
     public override ImmutableArray<SuppressionDescriptor> SupportedSuppressions { get; } =
         ImmutableArray.Create(SuppressionDescriptor);
 ```
-<sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer/SuppressNullForgivingWarningAnalyzer.cs#L10-L18' title='Snippet source file'>snippet source</a> | <a href='#snippet-suppressnullforgivinganalyzer_declaration' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer/SuppressNullForgivingWarningAnalyzer.cs#L10-L18' title='Snippet source file'>snippet source</a> | <a href='#snippet-SuppressNullForgivingAnalyzer_Declaration' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 #### Add the test scaffold
 <!-- snippet: BasicSuppressionTestSetup -->
-<a id='snippet-basicsuppressiontestsetup'></a>
+<a id='snippet-BasicSuppressionTestSetup'></a>
 ```cs
 using Test = CSharpDiagnosticSuppressorTest<NullForgivingDetectionAnalyzer, SuppressNullForgivingWarningAnalyzer, TestVerifier>;
 using static ReferenceAssemblies.Net;
@@ -360,7 +360,7 @@ public class SuppressNullForgivingWarningTest
         .RunAsync();
     }
 ```
-<sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer.Test/SuppressNullForgivingWarningTest.cs#L9-L34' title='Snippet source file'>snippet source</a> | <a href='#snippet-basicsuppressiontestsetup' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer.Test/SuppressNullForgivingWarningTest.cs#L9-L34' title='Snippet source file'>snippet source</a> | <a href='#snippet-BasicSuppressionTestSetup' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 ### Prepare the test to include the analyzer with the diagnostic to suppress
@@ -369,20 +369,20 @@ At next the test needs to know about the diagnostic that should be suppressed.
 Additionally to the package reference the assembly of the analyzer needs to be referenced, too, so the analyzer is available at the test's runtime:
 
 <!-- snippet: ReferenceNullableExtendedAnalyzer -->
-<a id='snippet-referencenullableextendedanalyzer'></a>
+<a id='snippet-ReferenceNullableExtendedAnalyzer'></a>
 ```csproj
 <ItemGroup>
   <PackageReference Include="Nullable.Extended.Analyzer" Version="1.15.6169" PrivateAssets="all" GeneratePathProperty="true" />
   <Reference Include="$(PkgNullable_Extended_Analyzer)\analyzers\dotnet\cs\Nullable.Extended.Analyzer.dll" />
 </ItemGroup>
 ```
-<sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer.Test/SolutionAnalyzer.Test.csproj#L24-L29' title='Snippet source file'>snippet source</a> | <a href='#snippet-referencenullableextendedanalyzer' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer.Test/SolutionAnalyzer.Test.csproj#L24-L29' title='Snippet source file'>snippet source</a> | <a href='#snippet-ReferenceNullableExtendedAnalyzer' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 Implement the test for the suppressor:
 
 <!-- snippet: SuppressNullForgivingWarningTest -->
-<a id='snippet-suppressnullforgivingwarningtest'></a>
+<a id='snippet-SuppressNullForgivingWarningTest'></a>
 ```cs
 private static readonly NullForgivingDetectionAnalyzer NullForgivingDetectionAnalyzer = new();
 private static readonly DiagnosticDescriptor Nx0002 = NullForgivingDetectionAnalyzer.SupportedDiagnostics.Single(item => item.Id == "NX0002");
@@ -412,13 +412,13 @@ public async Task NullForgivingWarningIsSuppressedForInitOnlyProperties()
     .RunAsync();
 }
 ```
-<sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer.Test/SuppressNullForgivingWarningTest.cs#L36-L64' title='Snippet source file'>snippet source</a> | <a href='#snippet-suppressnullforgivingwarningtest' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer.Test/SuppressNullForgivingWarningTest.cs#L36-L64' title='Snippet source file'>snippet source</a> | <a href='#snippet-SuppressNullForgivingWarningTest' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 And based on the test the suppression analyzer can be implemented:
 
 <!-- snippet: SuppressNullForgivingAnalyzer_Implementation -->
-<a id='snippet-suppressnullforgivinganalyzer_implementation'></a>
+<a id='snippet-SuppressNullForgivingAnalyzer_Implementation'></a>
 ```cs
 public override void ReportSuppressions(SuppressionAnalysisContext context)
 {
@@ -450,7 +450,7 @@ public override void ReportSuppressions(SuppressionAnalysisContext context)
     }
 }
 ```
-<sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer/SuppressNullForgivingWarningAnalyzer.cs#L20-L50' title='Snippet source file'>snippet source</a> | <a href='#snippet-suppressnullforgivinganalyzer_implementation' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/SolutionAnalyzer/SolutionAnalyzer/SuppressNullForgivingWarningAnalyzer.cs#L20-L50' title='Snippet source file'>snippet source</a> | <a href='#snippet-SuppressNullForgivingAnalyzer_Implementation' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 ## Pitfalls
@@ -467,12 +467,12 @@ In this case the Visual Studio process must be restarted to make changes to the 
 
 Sometimes it may happen that there are lots of unexpected errors when running a test, e.g. 
 
-`error CS0246: The type or namespace name 'System' could not be found (are you missing a using directive or an assembly reference?)`
+`error CS0246: The type or namespace name 'System' could not be found (are _you missing a using directive or an assembly reference?)`
 
 This may be due to a corrupt nuget cache. 
 
 The framework reference assemblies are downloaded as nuget packages to the `%TEMP%\test-packages` folder. 
 When e.g. a test is interrupted while a package is still downloading, this cache might get corrupt.
 
-To fix this, simply delete the complete folder, and re-run the tests.
+To fix this, delete the complete folder, and re-run the tests.
 

@@ -35,14 +35,21 @@ foreach (var package in packages)
 
         foreach (var analyzerType in analyzerTypes.Where(type => !type.IsAbstract))
         {
-            var analyzer = (DiagnosticAnalyzer?)Activator.CreateInstance(analyzerType);
-
-            if (analyzer is null)
-                continue;
-
-            foreach (var diagnostic in analyzer.SupportedDiagnostics)
+            try
             {
-                Console.WriteLine($"\t{diagnostic.Id}\t{analyzer.GetType()}");
+                var analyzer = (DiagnosticAnalyzer?)Activator.CreateInstance(analyzerType);
+
+                if (analyzer is null)
+                    continue;
+
+                foreach (var diagnostic in analyzer.SupportedDiagnostics)
+                {
+                    Console.WriteLine($"\t{diagnostic.Id}\t{analyzer.GetType()}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Ignore: \t{analyzerType.FullName}\t{ex.Message}");
             }
         }
     }
