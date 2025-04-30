@@ -16,6 +16,11 @@ simplify the testing scaffold and to workaround some issues of the V1.1.1 analyz
 - [Integration of the analyzers into the solution](#integrate-the-analyzer-in-the-solution) without the need to create a package or install a Visual Studio extension.
 - [Pitfalls](#pitfalls) to avoid.
 
+## General
+Which version of `Microsoft.CodeAnalysis.*` should I reference in my analyzer?
+
+See this [Version map](https://andrewlock.net/supporting-multiple-sdk-versions-in-analyzers-and-source-generators/) to select a version that supports the targeting environment where the analyzers can be used. Since these libraries are not shipped with your analyzer, you can use the lowest version that supports your use case.
+
 ## Use cases
 - [Diagnostic analyzer to conditionally enforce coding rules](#use-case-1)
 - [Supression analyzers to suppress warnings depending on the context](#use-case-2)
