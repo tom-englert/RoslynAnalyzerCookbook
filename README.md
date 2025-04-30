@@ -19,7 +19,7 @@ simplify the testing scaffold and to workaround some issues of the V1.1.1 analyz
 ## General
 Which version of `Microsoft.CodeAnalysis.*` should I reference in my analyzer?
 
-See this [Version map](https://andrewlock.net/supporting-multiple-sdk-versions-in-analyzers-and-source-generators/) to select a version that supports the targeting environment where the analyzers can be used. Since these libraries are not shipped with your analyzer, you can use the lowest version that supports your use case.
+See this [version map](https://andrewlock.net/supporting-multiple-sdk-versions-in-analyzers-and-source-generators/) to select a version that supports the desired targeting environment where the analyzers can be used. Since these libraries are not shipped with your analyzer, you don't have to keep them up to date, but can safely use the lowest version that supports your use case.
 
 ## Use cases
 - [Diagnostic analyzer to conditionally enforce coding rules](#use-case-1)
